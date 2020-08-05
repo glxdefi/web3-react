@@ -1,6 +1,7 @@
 module.exports = {
   env: {
     RPC_URL_1: 'https://mainnet.infura.io/v3/60ab76e16df54c808e50a79975b4779f',
+    RPC_URL_3: 'https://ropsten.infura.io/v3/404b78d3e9364b79921c39a8ea909b1c',
     RPC_URL_4: 'https://rinkeby.infura.io/v3/60ab76e16df54c808e50a79975b4779f',
     FORTMATIC_API_KEY: 'pk_test_A6260FCBAA2EBDFB',
     PORTIS_DAPP_ID: 'e9be171c-2b7f-4ff0-8db9-327707511ee2',

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { FC } from 'react'
 import { Web3ReactProvider, useWeb3React, UnsupportedChainIdError } from '@web3-react/core'
 import {
   NoEthereumProviderError,
@@ -8,6 +8,9 @@ import { UserRejectedRequestError as UserRejectedRequestErrorWalletConnect } fro
 import { UserRejectedRequestError as UserRejectedRequestErrorFrame } from '@web3-react/frame-connector'
 import { Web3Provider } from '@ethersproject/providers'
 import { formatEther } from '@ethersproject/units'
+import { Button, Avatar, Modal, Typography } from 'antd';
+const { Text, Link } = Typography;
+import { UserOutlined } from '@ant-design/icons';
 
 import { useEagerConnect, useInactiveListener } from '../hooks'
 import {
@@ -27,7 +30,7 @@ import {
 import { Spinner } from '../components/Spinner'
 
 enum ConnectorNames {
-  Injected = 'Injected',
+  Injected = 'MetaMask',
   Network = 'Network',
   WalletConnect = 'WalletConnect',
   WalletLink = 'WalletLink',
@@ -204,13 +207,83 @@ function Balance() {
     </>
   )
 }
+function LoginModal(props){
+  const { connector, library, chainId, account, activate, deactivate, active, error } = props.context
+  const [activatingConnector, setActivatingConnector] = React.useState<any>()
+  const [loginModalVisible, setLoginModalVisible] = React.useState<boolean>(false)
+
+  const handleLogin = () => {
+    setLoginModalVisible(true)
+  }
+
+  return <>
+    <Button type="primary" onClick={handleLogin}>连接钱包</Button>
+  <Modal
+    title="选择登录方式"
+    visible={loginModalVisible}
+  >
+    <div
+      style={{
+        display: 'grid',
+        gridGap: '1rem',
+        gridTemplateColumns: '1fr 1fr',
+        maxWidth: '20rem',
+        margin: 'auto'
+      }}
+    >
+      {Object.keys(connectorsByName).map(name => {
+        const currentConnector = connectorsByName[name]
+        const activating = currentConnector === activatingConnector
+        const connected = currentConnector === connector
+        const disabled = !props.triedEager || !!activatingConnector || connected || !!error
+
+        return (
+          <button
+            style={{
+              height: '3rem',
+              borderRadius: '1rem',
+              borderColor: activating ? 'orange' : connected ? 'green' : 'unset',
+              cursor: disabled ? 'unset' : 'pointer',
+              position: 'relative'
+            }}
+            disabled={disabled}
+            key={name}
+            onClick={() => {
+              setActivatingConnector(currentConnector)
+              activate(connectorsByName[name])
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                color: 'black',
+                margin: '0 0 0 1rem'
+              }}
+            >
+              {activating && <Spinner color={'black'} style={{ height: '25%', marginLeft: '-1rem' }} />}
+              {connected && (
+                <span role="img" aria-label="check">
+                  ✅
+                </span>
+              )}
+            </div>
+            {name}
+          </button>
+        )
+      })}
+    </div>
+  </Modal>
+  </>
+}
 
 function Header() {
-  const { active, error } = useWeb3React()
-
   return (
     <>
-      <h1 style={{ margin: '1rem', textAlign: 'right' }}>{active ? '🟢' : error ? '🔴' : '🟠'}</h1>
       <h3
         style={{
           display: 'grid',
@@ -229,11 +302,9 @@ function Header() {
     </>
   )
 }
-
-function App() {
+const App:FC = () => {
   const context = useWeb3React<Web3Provider>()
   const { connector, library, chainId, account, activate, deactivate, active, error } = context
-
   // handle logic to recognize the connector currently being activated
   const [activatingConnector, setActivatingConnector] = React.useState<any>()
   React.useEffect(() => {
@@ -250,63 +321,11 @@ function App() {
 
   return (
     <>
-      <Header />
-      <hr style={{ margin: '2rem' }} />
-      <div
-        style={{
-          display: 'grid',
-          gridGap: '1rem',
-          gridTemplateColumns: '1fr 1fr',
-          maxWidth: '20rem',
-          margin: 'auto'
-        }}
-      >
-        {Object.keys(connectorsByName).map(name => {
-          const currentConnector = connectorsByName[name]
-          const activating = currentConnector === activatingConnector
-          const connected = currentConnector === connector
-          const disabled = !triedEager || !!activatingConnector || connected || !!error
+      {active ? <Text mark>Ant Design<Avatar size={32} icon={<UserOutlined />} /></Text> : error ? '🔴' : <LoginModal context={context} triedEager={triedEager} />}
 
-          return (
-            <button
-              style={{
-                height: '3rem',
-                borderRadius: '1rem',
-                borderColor: activating ? 'orange' : connected ? 'green' : 'unset',
-                cursor: disabled ? 'unset' : 'pointer',
-                position: 'relative'
-              }}
-              disabled={disabled}
-              key={name}
-              onClick={() => {
-                setActivatingConnector(currentConnector)
-                activate(connectorsByName[name])
-              }}
-            >
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '0',
-                  left: '0',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: 'black',
-                  margin: '0 0 0 1rem'
-                }}
-              >
-                {activating && <Spinner color={'black'} style={{ height: '25%', marginLeft: '-1rem' }} />}
-                {connected && (
-                  <span role="img" aria-label="check">
-                    ✅
-                  </span>
-                )}
-              </div>
-              {name}
-            </button>
-          )
-        })}
-      </div>
+      <Header />
+
+      <hr style={{ margin: '2rem' }} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         {(active || error) && (
           <button
