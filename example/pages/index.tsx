@@ -8,8 +8,10 @@ import { UserRejectedRequestError as UserRejectedRequestErrorWalletConnect } fro
 import { UserRejectedRequestError as UserRejectedRequestErrorFrame } from '@web3-react/frame-connector'
 import { Web3Provider } from '@ethersproject/providers'
 import { formatEther } from '@ethersproject/units'
-import { Button, Avatar, Modal, Typography } from 'antd';
+import { Button, Avatar, Modal, Tag, Typography, Layout, Menu, Dropdown, Row, Col  } from 'antd';
 const { Text, Link } = Typography;
+const { Header, Content, Footer } = Layout;
+
 import { UserOutlined } from '@ant-design/icons';
 
 import { useEagerConnect, useInactiveListener } from '../hooks'
@@ -30,7 +32,7 @@ import {
 import { Spinner } from '../components/Spinner'
 
 enum ConnectorNames {
-  Injected = 'MetaMask',
+  Injected = 'Injected',
   Network = 'Network',
   WalletConnect = 'WalletConnect',
   WalletLink = 'WalletLink',
@@ -61,18 +63,18 @@ const connectorsByName: { [connectorName in ConnectorNames]: any } = {
 
 function getErrorMessage(error: Error) {
   if (error instanceof NoEthereumProviderError) {
-    return 'No Ethereum browser extension detected, install MetaMask on desktop or visit from a dApp browser on mobile.'
+    return '没有检测到以太坊环境, 安装 MetaMask 或者在 dApp 浏览器中打开'
   } else if (error instanceof UnsupportedChainIdError) {
-    return "You're connected to an unsupported network."
+    return "当前网络不支持，请连接到 Ropsten 网络"
   } else if (
     error instanceof UserRejectedRequestErrorInjected ||
     error instanceof UserRejectedRequestErrorWalletConnect ||
     error instanceof UserRejectedRequestErrorFrame
   ) {
-    return 'Please authorize this website to access your Ethereum account.'
+    return '请授权访问您的以太坊账户'
   } else {
     console.error(error)
-    return 'An unknown error occurred. Check the console for more details.'
+    return '未知错误'
   }
 }
 
@@ -82,7 +84,7 @@ function getLibrary(provider: any): Web3Provider {
   return library
 }
 
-export default function() {
+export default function () {
   return (
     <Web3ReactProvider getLibrary={getLibrary}>
       <App />
@@ -92,26 +94,27 @@ export default function() {
 
 function ChainId() {
   const { chainId } = useWeb3React()
+  let tag:any;
+  if (chainId == 1) 
+    tag = <Tag color="geekblue">主网</Tag>
+  if (chainId == 3)
+    tag = <Tag color="volcano">Ropsten</Tag>
 
   return (
     <>
-      <span>Chain Id</span>
-      <span role="img" aria-label="chain">
-        ⛓
-      </span>
-      <span>{chainId ?? ''}</span>
+      {chainId && tag}
     </>
   )
 }
 
 function BlockNumber() {
   const { chainId, library } = useWeb3React()
+  console.log('BlockNumber', library);
 
   const [blockNumber, setBlockNumber] = React.useState<number>()
   React.useEffect((): any => {
     if (!!library) {
       let stale = false
-
       library
         .getBlockNumber()
         .then((blockNumber: number) => {
@@ -149,52 +152,62 @@ function BlockNumber() {
   )
 }
 
-function Account() {
+function Account(props) {
   const { account } = useWeb3React()
-
+  const href = `https://etherscan.io/address/${account}`
+  const menu = (
+    <Menu> <Menu.Item>
+      <a target="_blank" rel="noopener noreferrer" href={href}>
+        交易历史
+      </a>
+    </Menu.Item>
+      <Menu.Item>
+        <a target="_blank" rel="noopener noreferrer" onClick={props.deactivate}>
+          退出
+      </a>
+      </Menu.Item>
+    </Menu>
+  );
   return (
-    <>
-      <span>Account</span>
+    <Dropdown overlay={menu}>
+      <div style={{ height: '100%'}}>
       <span role="img" aria-label="robot">
-        🤖
+        <Avatar size={32} icon={<UserOutlined />} />
       </span>
       <span>
         {account === null
           ? '-'
           : account
-          ? `${account.substring(0, 6)}...${account.substring(account.length - 4)}`
+          ? `  ${account.substring(0, 6)}...${account.substring(account.length - 4)}`
           : ''}
       </span>
-    </>
+      </div>
+    </Dropdown>
   )
 }
 
 function Balance() {
   const { account, library, chainId } = useWeb3React()
+  console.log('Balance', library);
 
   const [balance, setBalance] = React.useState()
-  React.useEffect((): any => {
-    if (!!account && !!library) {
-      let stale = false
-
-      library
-        .getBalance(account)
-        .then((balance: any) => {
-          if (!stale) {
-            setBalance(balance)
-          }
-        })
-        .catch(() => {
-          if (!stale) {
-            setBalance(null)
-          }
-        })
-
-      return () => {
-        stale = true
-        setBalance(undefined)
+  React.useEffect(() => {
+    (async ()=> {
+      if (!!account && !!library) {
+        let stale = false
+        console.log('xxx')
+        const result = await library.getBalance(account)
+        console.log('result:', result);
+        if (!stale) {
+          setBalance(result)
+        }
+        return () => {
+          stale = true
+          setBalance(undefined)
+        }
       }
-    }
+     
+    })()
   }, [account, library, chainId]) // ensures refresh if referential identity of library doesn't change across chainIds
 
   return (
@@ -208,8 +221,8 @@ function Balance() {
   )
 }
 function LoginModal(props){
-  const { connector, library, chainId, account, activate, deactivate, active, error } = props.context
-  const [activatingConnector, setActivatingConnector] = React.useState<any>()
+  const context = useWeb3React<Web3Provider>()
+  const { connector, activate, error } = context
   const [loginModalVisible, setLoginModalVisible] = React.useState<boolean>(false)
 
   const handleLogin = () => {
@@ -221,6 +234,10 @@ function LoginModal(props){
   <Modal
     title="选择登录方式"
     visible={loginModalVisible}
+    footer={null}
+      onCancel={() => {
+        setLoginModalVisible(false)
+      }}
   >
     <div
       style={{
@@ -233,10 +250,9 @@ function LoginModal(props){
     >
       {Object.keys(connectorsByName).map(name => {
         const currentConnector = connectorsByName[name]
-        const activating = currentConnector === activatingConnector
+        const activating = currentConnector === props.activatingConnector
         const connected = currentConnector === connector
-        const disabled = !props.triedEager || !!activatingConnector || connected || !!error
-
+        const disabled = !props.triedEager || !!props.activatingConnector || connected || !!error
         return (
           <button
             style={{
@@ -249,7 +265,7 @@ function LoginModal(props){
             disabled={disabled}
             key={name}
             onClick={() => {
-              setActivatingConnector(currentConnector)
+              props.setActivatingConnector(currentConnector)
               activate(connectorsByName[name])
             }}
           >
@@ -281,7 +297,7 @@ function LoginModal(props){
   </>
 }
 
-function Header() {
+function HeaderComponent() {
   return (
     <>
       <h3
@@ -294,9 +310,6 @@ function Header() {
           margin: 'auto'
         }}
       >
-        <ChainId />
-        <BlockNumber />
-        <Account />
         <Balance />
       </h3>
     </>
@@ -320,34 +333,31 @@ const App:FC = () => {
   useInactiveListener(!triedEager || !!activatingConnector)
 
   return (
-    <>
-      {active ? <Text mark>Ant Design<Avatar size={32} icon={<UserOutlined />} /></Text> : error ? '🔴' : <LoginModal context={context} triedEager={triedEager} />}
+    <Layout className="layout">
 
-      <Header />
+      <Header className="header">
+        <Row>
+          <Col span={21}><div className="logo">复仇者联盟</div></Col>
+          <Col span={1}><ChainId /></Col>
+          <Col span={2} style={{
+            textAlign: 'right'
+          }}>{active ?
+              (<Account deactivate={deactivate} />) : 
+              (error ? <Button danger onClick={() => {
+                deactivate()
+              }}>错误，断开连接</Button> : <LoginModal triedEager={triedEager} activatingConnector={activatingConnector} setActivatingConnector={setActivatingConnector}  />)}
+          </Col>
+        </Row>
+       
+      </Header>
+      <Content style={{ padding: '30px 50px' }}>
+        <HeaderComponent />
+        <div className="site-layout-content">
 
-      <hr style={{ margin: '2rem' }} />
+        </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {(active || error) && (
-          <button
-            style={{
-              height: '3rem',
-              marginTop: '2rem',
-              borderRadius: '1rem',
-              borderColor: 'red',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              deactivate()
-            }}
-          >
-            Deactivate
-          </button>
-        )}
-
         {!!error && <h4 style={{ marginTop: '1rem', marginBottom: '0' }}>{getErrorMessage(error)}</h4>}
       </div>
-
-      <hr style={{ margin: '2rem' }} />
 
       <div
         style={{
@@ -380,6 +390,7 @@ const App:FC = () => {
             Sign Message
           </button>
         )}
+        {/* // 其他客户端的功能，不关心 */}
         {!!(connector === connectorsByName[ConnectorNames.Network] && chainId) && (
           <button
             style={{
@@ -481,6 +492,8 @@ const App:FC = () => {
           </button>
         )}
       </div>
-    </>
+      </Content>
+      <Footer style={{ textAlign: 'center' }}>PowerBy 复仇者联盟</Footer>
+    </Layout>
   )
 }

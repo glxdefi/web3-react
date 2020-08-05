@@ -3,3 +3,12 @@
 body {
   font-family: sans-serif;
 }
+
+.logo {
+  font-size: 32px;
+  color: #333;
+}
+
+.header{
+  background: #fff;
+}
