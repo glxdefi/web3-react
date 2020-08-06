@@ -204,9 +204,10 @@ function Account(props) {
 function TakeModal(props) {
   const { account, active} = useWeb3React<Web3Provider>()
   const [visible, setVisible] = React.useState<boolean>(false)
+  const { setLoginModalVisible } = React.useContext(MyContext)
   const handleLogin = () => {
     if (!active){
-
+      setLoginModalVisible(true)
     }else {
       setVisible(true)
     }
@@ -242,16 +243,12 @@ function TakeModal(props) {
 
 function LoginModal(props) {
   const context = useWeb3React<Web3Provider>()
-  const {showLoginModal} = React.useContext(MyContext)
+  const { loginModalVisible, setLoginModalVisible} = React.useContext(MyContext)
   const { connector, activate, error } = context
-  const [loginModalVisible, setLoginModalVisible] = React.useState<boolean>(false)
 
   const handleLogin = () => {
     setLoginModalVisible(true)
-  }
-  React.useEffect(() => {
-    setLoginModalVisible(showLoginModal)
-  }, [showLoginModal]) 
+  } 
 
   return <>
     <Button type="primary" onClick={handleLogin}>连接钱包</Button>
@@ -343,7 +340,8 @@ function HeaderComponent() {
   )
 }
 function PendingTx() {
-  const pendings = ['0xa168d208ac6c687a30517f7f5852a1cfa9293230ee76a96f1624b8e50c0a20fc', '0xba4198b6901611947f4f7fdcc1b18b6228d601102866f2cf5512041f66676551']
+  const { pendings } = React.useContext(MyContext)
+  console.log('pendings', pendings);
   const btns = pendings.map((item) => {
     return <Button type="link" href={'https://ropsten.etherscan.io/tx/' + item} target="_blank" size='small'>{item}</Button>
   })
@@ -362,6 +360,9 @@ const App: FC = () => {
   const { connector, library, chainId, account, activate, deactivate, active, error } = context
   // handle logic to recognize the connector currently being activated
   const [activatingConnector, setActivatingConnector] = React.useState<any>()
+  const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
+  const [pendings, setPendings] = React.useState<string[]>([])
+
   React.useEffect(() => {
     if (activatingConnector && activatingConnector === connector) {
       setActivatingConnector(undefined)
@@ -412,9 +413,9 @@ const App: FC = () => {
     address: '0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6',
     amount: 123.12345,
   }]
-
+  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings }
   return (
-    <Provider value={{ showLoginModal: false }}>
+    <Provider value={APPContext}>
       <Layout className="layout">
         <ErrorCatch />
         <Header className="header">
@@ -423,7 +424,8 @@ const App: FC = () => {
             <Col span={1}><ChainId /></Col>
             <Col span={2} style={{
               textAlign: 'right'
-            }}>{active ?
+            }}>
+              {active ?
               (<Account deactivate={deactivate} />) :
               (error ? <Button danger onClick={() => {
                 deactivate()

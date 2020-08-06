@@ -13,6 +13,7 @@ const ERC20_ABI = require('./erc20.abi.json');
 
 function Transfer({ address }: { address: string }) {
   const { library, account, chainId} = useWeb3React<Web3Provider>();
+  const { pendings, setPendings } = React.useContext(MyContext)
 
   const layout = {
     labelCol: { span: 4 },
@@ -27,16 +28,22 @@ function Transfer({ address }: { address: string }) {
     let amount = ethers.utils.parseUnits(values.amount);
       (async () => {
         try {
-          console.log(values, values.to, amount);
           const result = await contract.transfer(values.to, amount)
           message.success('交易已广播：' + result.hash)
+          const list = [...pendings, result.hash]
+          setPendings(list)
           const tx = await library.waitForTransaction(result.hash, 1 ,120 * 1000) // 1个高度确认，等待 2 分钟
-          console.log(tx);
-          message.success('Approve Success')
+          const index = list.indexOf(tx.transactionHash)
+
+          if(index !== -1){
+            list.splice(index, 1)
+            message.success('交易成功 ！')
+            setPendings([...list])
+          }
         } catch (error) {
           // @ts-ignore
           if (error && error.code === 4001) {
-            return message.error('您已经取消了交易授权')
+            return message.error('您已经取消了交易')
           }
         }
       })();
