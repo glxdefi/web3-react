@@ -2,6 +2,7 @@
 
 body {
   font-family: sans-serif;
+  background-color: #fff;
 }
 
 .logo {
@@ -9,6 +10,33 @@ body {
   color: #333;
 }
 
-.header{
-  background: #fff;
+.header {
+  background: #f0f2f5;
+}
+
+.site-layout-backgroud {
+  background-color: #fff;
+  padding: 30px 50px;
+  width: 1100px;
+  min-height: 500px;
+  text-align: center;
+  margin: 20px auto;
+}
+
+.progressBar {
+  padding: 15px;
+}
+
+.progressBar div span {
+  line-height: 30px;
+  color: #fff;
+  font-size: 14;
+}
+
+.redList .ant-list-header {
+  background-color: #ff6666;
+}
+
+.blueList .ant-list-header {
+  background-color: #1890ff;
 }
