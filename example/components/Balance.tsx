@@ -2,6 +2,8 @@
 import React from 'react'
 import {useWeb3React } from '@web3-react/core'
 import { formatEther } from '@ethersproject/units'
+import { ethers, BigNumber, FixedNumber } from 'ethers'
+
 import { MyContext } from '../context'
 
 export default function Balance() {
@@ -14,8 +16,10 @@ export default function Balance() {
       if (!!account && !!library) {
         let stale = false
         const result = await library.getBalance(account)
+        const amount = Number(ethers.utils.formatUnits(result)).toFixed(5)
         if (!stale) {
-          setBalance(result)
+          // @ts-ignore
+          setBalance(amount)
         }
         return () => {
           stale = true
@@ -32,7 +36,7 @@ export default function Balance() {
       <span role="img" aria-label="gold">
         💰
       </span>
-      <span>{balance === null ? 'Error' : balance ? `Ξ${formatEther(balance)}` : ''}</span>
+      <span>{balance === null ? 'Error' : balance ? `Ξ${balance}` : ''}</span>
     </>
   )
 }

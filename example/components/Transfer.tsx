@@ -3,7 +3,7 @@ import React from 'react'
 import { Web3Provider } from '@ethersproject/providers';
 import {useWeb3React } from '@web3-react/core'
 import { formatEther } from '@ethersproject/units'
-import { ethers, BigNumber, FixedNumber} from 'ethers'
+import { ethers, BigNumber} from 'ethers'
 import { Form, Input, message, Button, Modal } from 'antd';
 
 import { MyContext } from '../context'
@@ -11,7 +11,7 @@ import { MyContext } from '../context'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ERC20_ABI = require('./erc20.abi.json');
 
-function Approve({ address }: { address: string }) {
+function Transfer({ address }: { address: string }) {
   const { library, account, chainId} = useWeb3React<Web3Provider>();
 
   const layout = {
@@ -22,14 +22,13 @@ function Approve({ address }: { address: string }) {
     wrapperCol: { offset: 4, span: 4 },
   };
 
-
-
   const onFinish = values => {
     const contract = new ethers.Contract(address, ERC20_ABI, library.getSigner(account));
-    // let amount = ethers.utils.parseUnits(values.amount);
+    let amount = ethers.utils.parseUnits(values.amount);
       (async () => {
         try {
-          const result = await contract.approve('d719c34261e099fdb33030ac8909d5788d3039c4', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+          console.log(values, values.to, amount);
+          const result = await contract.transfer(values.to, amount)
           message.success('交易已广播：' + result.hash)
           const tx = await library.waitForTransaction(result.hash, 1 ,120 * 1000) // 1个高度确认，等待 2 分钟
           console.log(tx);
@@ -54,13 +53,27 @@ function Approve({ address }: { address: string }) {
       onFinish={onFinish}
       onFinishFailed={onFinishFailed}
     >
+      <Form.Item
+        label="To"
+        name="to"
+        initialValue="0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6"
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item
+        label="Amount"
+        name="amount"
+      >
+        <Input />
+      </Form.Item>
+
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit">
-          Approve
+           转账
         </Button>
       </Form.Item>
     </Form>
   );
 }
 
-export default Approve;
+export default Transfer;

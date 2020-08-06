@@ -10,6 +10,7 @@ import { Web3Provider } from '@ethersproject/providers'
 import Balance from '../components/Balance'
 import TokenInfo from '../components/TokenInfo'
 import Approve from '../components/Approve'
+import Transfer from '../components/Transfer'
 import { Button, Avatar, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col  } from 'antd';
 import { Provider} from '../context'
 const { Text, Link } = Typography;
@@ -166,7 +167,7 @@ function BlockNumber() {
 
 function Account(props) {
   const { account } = useWeb3React()
-  const href = `https://etherscan.io/address/${account}`
+  const href = `https://ropsten.etherscan.io/address/${account}`
   const menu = (
     <Menu> <Menu.Item>
       <a target="_blank" rel="noopener noreferrer" href={href}>
@@ -335,7 +336,8 @@ const App:FC = () => {
       <Content style={{ padding: '30px 50px' }}>
         <HeaderComponent />
         <div className="site-layout-content">
-            <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d"/>
+            <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d" />
+            <Transfer address="0xad6d458402f60fd3bd25163575031acdce07538d" />
         </div>
 
 
