@@ -7,8 +7,11 @@ import {
 import { UserRejectedRequestError as UserRejectedRequestErrorWalletConnect } from '@web3-react/walletconnect-connector'
 import { UserRejectedRequestError as UserRejectedRequestErrorFrame } from '@web3-react/frame-connector'
 import { Web3Provider } from '@ethersproject/providers'
-import { formatEther } from '@ethersproject/units'
-import { Button, Avatar, Modal, Tag, Typography, Layout, Menu, Dropdown, Row, Col  } from 'antd';
+import Balance from '../components/Balance'
+import TokenInfo from '../components/TokenInfo'
+import Approve from '../components/Approve'
+import { Button, Avatar, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col  } from 'antd';
+import { Provider} from '../context'
 const { Text, Link } = Typography;
 const { Header, Content, Footer } = Layout;
 
@@ -61,21 +64,31 @@ const connectorsByName: { [connectorName in ConnectorNames]: any } = {
   [ConnectorNames.Torus]: torus
 }
 
-function getErrorMessage(error: Error) {
-  if (error instanceof NoEthereumProviderError) {
-    return '没有检测到以太坊环境, 安装 MetaMask 或者在 dApp 浏览器中打开'
-  } else if (error instanceof UnsupportedChainIdError) {
-    return "当前网络不支持，请连接到 Ropsten 网络"
-  } else if (
-    error instanceof UserRejectedRequestErrorInjected ||
-    error instanceof UserRejectedRequestErrorWalletConnect ||
-    error instanceof UserRejectedRequestErrorFrame
-  ) {
-    return '请授权访问您的以太坊账户'
-  } else {
-    console.error(error)
-    return '未知错误'
-  }
+function ErrorCatch() {
+  const { error } = useWeb3React()
+
+  React.useEffect((): any => {
+    if (error instanceof NoEthereumProviderError) {
+      return message.error('没有检测到以太坊环境, 安装 MetaMask 或者在 dApp 浏览器中打开')
+    } 
+    
+    if (error instanceof UnsupportedChainIdError) {
+      return message.error("当前网络不支持，请连接到 Ropsten 网络")
+    } 
+    if (
+      error instanceof UserRejectedRequestErrorInjected ||
+      error instanceof UserRejectedRequestErrorWalletConnect ||
+      error instanceof UserRejectedRequestErrorFrame
+    ) {
+      return message.error('请授权访问您的以太坊账户')
+    } 
+    if (error){
+      console.error(error)
+      return message.error('未知错误')
+    }
+    
+  }, [error])
+  return (<></>)
 }
 
 function getLibrary(provider: any): Web3Provider {
@@ -109,7 +122,6 @@ function ChainId() {
 
 function BlockNumber() {
   const { chainId, library } = useWeb3React()
-  console.log('BlockNumber', library);
 
   const [blockNumber, setBlockNumber] = React.useState<number>()
   React.useEffect((): any => {
@@ -186,40 +198,6 @@ function Account(props) {
   )
 }
 
-function Balance() {
-  const { account, library, chainId } = useWeb3React()
-  console.log('Balance', library);
-
-  const [balance, setBalance] = React.useState()
-  React.useEffect(() => {
-    (async ()=> {
-      if (!!account && !!library) {
-        let stale = false
-        console.log('xxx')
-        const result = await library.getBalance(account)
-        console.log('result:', result);
-        if (!stale) {
-          setBalance(result)
-        }
-        return () => {
-          stale = true
-          setBalance(undefined)
-        }
-      }
-     
-    })()
-  }, [account, library, chainId]) // ensures refresh if referential identity of library doesn't change across chainIds
-
-  return (
-    <>
-      <span>Balance</span>
-      <span role="img" aria-label="gold">
-        💰
-      </span>
-      <span>{balance === null ? 'Error' : balance ? `Ξ${formatEther(balance)}` : ''}</span>
-    </>
-  )
-}
 function LoginModal(props){
   const context = useWeb3React<Web3Provider>()
   const { connector, activate, error } = context
@@ -311,6 +289,9 @@ function HeaderComponent() {
         }}
       >
         <Balance />
+        <BlockNumber/>
+        <TokenInfo address="0xad6d458402f60fd3bd25163575031acdce07538d"/>
+       
       </h3>
     </>
   )
@@ -333,8 +314,9 @@ const App:FC = () => {
   useInactiveListener(!triedEager || !!activatingConnector)
 
   return (
+    <Provider value={{ activatingConnector, test: 123 }}>
     <Layout className="layout">
-
+    <ErrorCatch />
       <Header className="header">
         <Row>
           <Col span={21}><div className="logo">复仇者联盟</div></Col>
@@ -353,11 +335,9 @@ const App:FC = () => {
       <Content style={{ padding: '30px 50px' }}>
         <HeaderComponent />
         <div className="site-layout-content">
-
+            <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d"/>
         </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {!!error && <h4 style={{ marginTop: '1rem', marginBottom: '0' }}>{getErrorMessage(error)}</h4>}
-      </div>
+
 
       <div
         style={{
@@ -390,7 +370,6 @@ const App:FC = () => {
             Sign Message
           </button>
         )}
-        {/* // 其他客户端的功能，不关心 */}
         {!!(connector === connectorsByName[ConnectorNames.Network] && chainId) && (
           <button
             style={{
@@ -495,5 +474,6 @@ const App:FC = () => {
       </Content>
       <Footer style={{ textAlign: 'center' }}>PowerBy 复仇者联盟</Footer>
     </Layout>
+    </Provider>
   )
 }
