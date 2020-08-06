@@ -12,7 +12,7 @@ import TokenInfo from '../components/TokenInfo'
 import Approve from '../components/Approve'
 import Transfer from '../components/Transfer'
 import { Button, Alert, List, Divider, Spin, Statistic, Avatar, Card, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
-import { Provider } from '../context'
+import { Provider, MyContext } from '../context'
 const { Title, Text, Link } = Typography;
 const { Countdown } = Statistic;
 const { Header, Content, Footer } = Layout;
@@ -201,15 +201,57 @@ function Account(props) {
     </Dropdown>
   )
 }
+function TakeModal(props) {
+  const { account, active} = useWeb3React<Web3Provider>()
+  const [visible, setVisible] = React.useState<boolean>(false)
+  const handleLogin = () => {
+    if (!active){
+
+    }else {
+      setVisible(true)
+    }
+  }
+
+  return <>
+    <Button type="default" size='middle' onClick={handleLogin} style={{
+      background: props.color,
+      color: '#fff',
+    }}>支持</Button>
+  <Modal
+    title="选择登录方式"
+    visible={visible}
+    footer={null}
+    onCancel={() => {
+      setVisible(false)
+    }
+    }>
+    <div
+      style={{
+        display: 'grid',
+        gridGap: '1rem',
+        gridTemplateColumns: '1fr 1fr',
+        maxWidth: '20rem',
+        margin: 'auto'
+      }}
+    >
+      xxxxxxx
+  </div>
+  </Modal>
+  </>
+}
 
 function LoginModal(props) {
   const context = useWeb3React<Web3Provider>()
+  const {showLoginModal} = React.useContext(MyContext)
   const { connector, activate, error } = context
   const [loginModalVisible, setLoginModalVisible] = React.useState<boolean>(false)
 
   const handleLogin = () => {
     setLoginModalVisible(true)
   }
+  React.useEffect(() => {
+    setLoginModalVisible(showLoginModal)
+  }, [showLoginModal]) 
 
   return <>
     <Button type="primary" onClick={handleLogin}>连接钱包</Button>
@@ -308,7 +350,7 @@ function PendingTx() {
   const spin = <Spin />
   return pendings.length > 0 && <Alert
     style={{ width: 600, margin: '0 auto' }}
-    message="Pending 中的交易"
+    message="广播中的交易"
     description={btns}
     type="success"
     showIcon
@@ -332,7 +374,7 @@ const App: FC = () => {
   // handle logic to connect in reaction to certain events on the injected ethereum provider, if it exists
   useInactiveListener(!triedEager || !!activatingConnector)
   const teams = [{
-    name: '床铺',
+    name: '川普',
     color: '#ff6666',
     img: './2.svg',
     amount: 1234.1,
@@ -372,12 +414,12 @@ const App: FC = () => {
   }]
 
   return (
-    <Provider value={{ activatingConnector, test: 123 }}>
+    <Provider value={{ showLoginModal: false }}>
       <Layout className="layout">
         <ErrorCatch />
         <Header className="header">
           <Row>
-            <Col span={21}><div className="logo"><img src='logo.png' width="100" height="auto" style={{padding: 20}} /></div></Col>
+            <Col span={21}><div className="logo"><img src='logo.png' width="100" height="auto" style={{ padding: 20 }} /></div></Col>
             <Col span={1}><ChainId /></Col>
             <Col span={2} style={{
               textAlign: 'right'
@@ -443,11 +485,7 @@ const App: FC = () => {
                   {index == 0 ? <p>我已支持: <span>{item.supported}</span></p>
                     :
                     <p><span>{item.supported}</span>: 我已支持</p>}
-
-                  <Button type="default" size='middle' style={{
-                    background: item.color,
-                    color: '#fff',
-                  }}>支持</Button>
+                  <TakeModal color={item.color}/>
                 </Card>
               </Col>
             })}
@@ -461,34 +499,34 @@ const App: FC = () => {
           <div style={{ paddingTop: 30 }}><Title level={3}>利息奖金</Title></div>
           <div><Title level={1} style={{ color: '#CC9933' }}>$332.1</Title></div>
           <div><Text type="secondary" style={{ fontSize: 16 }}>奖金来自 compound 生息</Text></div>
-          <div><Text type="secondary" style={{ fontSize: 16}}>正、反方下注最多的人各得 50% 奖金</Text></div>
-          <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: 50}}>
-              <List
-                className="redList"
-                size="large"
-                header={<div style={{ color: '#fff', textAlign: 'left' }}>红队 Top10</div>}
-                bordered
-                dataSource={redUsers}
-                style={{ width: 400 }}
-              renderItem={(item, index) => <List.Item key={item.id}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#ff6666'}}>{item.amount} DAI</Text></List.Item>}
-              />
+          <div><Text type="secondary" style={{ fontSize: 16 }}>正、反方下注最多的人各得 50% 奖金</Text></div>
+          <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: 50 }}>
+            <List
+              className="redList"
+              size="large"
+              header={<div style={{ color: '#fff', textAlign: 'left' }}>红队 Top10</div>}
+              bordered
+              dataSource={redUsers}
+              style={{ width: 400 }}
+              renderItem={(item, index) => <List.Item key={item.id}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#ff6666' }}>{item.amount} DAI</Text></List.Item>}
+            />
 
-              <List
-                className="blueList"
-                size="large"
-                header={<div style={{ color: '#fff', textAlign: 'left' }}>蓝队 Top10</div>}
-                bordered
-                dataSource={blueUsers}
-                style={{ width: 400 }}
+            <List
+              className="blueList"
+              size="large"
+              header={<div style={{ color: '#fff', textAlign: 'left' }}>蓝队 Top10</div>}
+              bordered
+              dataSource={blueUsers}
+              style={{ width: 400 }}
               renderItem={(item, index) => <List.Item key={index}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#1890ff' }}>{item.amount} DAI</Text></List.Item>}
-              />
+            />
           </div>
         </Content>
-          <Content className="site-layout-backgroud">
-            <HeaderComponent />
-            <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d" />
-            <Transfer address="0xad6d458402f60fd3bd25163575031acdce07538d" />
-       
+        <Content className="site-layout-backgroud">
+          <HeaderComponent />
+          <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d" />
+          <Transfer address="0xad6d458402f60fd3bd25163575031acdce07538d" />
+
 
           <div
             style={{
