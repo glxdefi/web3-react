@@ -6,6 +6,10 @@ export const MyContext = React.createContext({
   pendings: [],
   setPendings: undefined,
   teams: [Object],
-  setTeams: undefined
+  setTeams: undefined,
+  event: Object,
+  setEvent: undefined,
+  winnerModalVisible: false, 
+  setWinnerModalVisible: undefined
 });
 export const Provider = MyContext.Provider

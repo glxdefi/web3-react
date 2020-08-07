@@ -23,6 +23,14 @@ body {
   margin: 20px auto;
 }
 
+.site-layout-backgroud-intro {
+  background-color: #fff;
+  padding: 30px 50px;
+  width: 1100px;
+  min-height: 500px;
+  margin: 20px auto;
+}
+
 .progressBar {
   padding: 15px;
 }

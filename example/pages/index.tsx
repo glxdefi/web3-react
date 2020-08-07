@@ -12,10 +12,10 @@ import Balance from '../components/Balance'
 import TokenInfo from '../components/TokenInfo'
 import Approve from '../components/Approve'
 import Transfer from '../components/Transfer'
-import { Button, Alert, Form, Input, List, Divider, Spin, Statistic, Avatar, Card, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
+import { Button, Alert, Result, Form, Input, List, Divider, Spin, Statistic, Avatar, Card, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
 import { Provider, MyContext } from '../context'
 import ERC20_ABI from '../components/erc20.abi.json'
-const { Title, Text, Link } = Typography;
+const { Title, Text, Paragraph, Link } = Typography;
 const { Countdown } = Statistic;
 const { Header, Content, Footer } = Layout;
 import { UserOutlined } from '@ant-design/icons';
@@ -208,7 +208,9 @@ function TakeModal(props) {
   const { account, active, library } = useWeb3React<Web3Provider>()
   const [takeModalVisible, setTakeModalVisible] = React.useState<boolean>(false)
   const [confirmLoading, setConfirmLoading] = React.useState<boolean>(false)
-  const { pendings, setPendings, setLoginModalVisible } = React.useContext(MyContext)
+  const {pendings, setPendings, setLoginModalVisible } = React.useContext(MyContext)
+  const [myBalance, setMyBalance] = React.useState<string>('0')
+
   const handleLogin = () => {
     if (!active) {
       setLoginModalVisible(true)
@@ -224,6 +226,19 @@ function TakeModal(props) {
   const onFinishFailed = errorInfo => {
     console.log('Failed:', errorInfo);
   };
+  // 初始化 team 数据
+  (async () => {
+    if (!library || !account) return
+    const contract = new ethers.Contract(DAI_ADDRESS, ERC20_ABI, library);
+
+    const [name, symbol, balanceOf] = await Promise.all([
+      contract.name(),
+      contract.symbol(),
+      account ? contract.balanceOf(account) : undefined,
+    ]);
+    const _myBalance = Number(ethers.utils.formatUnits(balanceOf)).toFixed(5)
+    setMyBalance(_myBalance);
+  })();
   const [form] = Form.useForm();
   const onOk = values => {
     setConfirmLoading(true);
@@ -256,7 +271,7 @@ function TakeModal(props) {
     })();
   };
   return <>
-    <Button type="default" size='middle' onClick={handleLogin} style={{
+    <Button type="default" size='large' onClick={handleLogin} style={{
       background: team.color,
       color: '#fff',
     }}>支持</Button>
@@ -265,6 +280,7 @@ function TakeModal(props) {
       visible={takeModalVisible}
       okText='确定'
       cancelText='取消'
+      confirmLoading={confirmLoading}
       onCancel={() => {
         setTakeModalVisible(false)
       }}
@@ -288,7 +304,7 @@ function TakeModal(props) {
           style={{ width: 400, padding: '30px 0' }}
         >
           <Form.Item label="余额">
-            <span className="ant-form-text" style={{ fontSize: 16 }}>1234.12345</span>
+            <span className="ant-form-text" style={{ fontSize: 16 }}>{myBalance}</span>
           </Form.Item>
           <Form.Item
             label="金额"
@@ -303,8 +319,7 @@ function TakeModal(props) {
   </>
 }
 
-
-
+// 登录数据
 function LoginModal(props) {
   const context = useWeb3React<Web3Provider>()
   const { loginModalVisible, setLoginModalVisible } = React.useContext(MyContext)
@@ -390,6 +405,7 @@ function SupportAmount(props) {
     <span>{takeDetail[props.teamName].support || 0}</span>
   )
 }
+// 队伍数据
 function TEAMInfo() {
   const { teams, setTeams, pendings } = React.useContext(MyContext)
   const { account, active, library, chainId } = useWeb3React<Web3Provider>();
@@ -397,7 +413,7 @@ function TEAMInfo() {
   React.useEffect(() => {
     // 初始化 team 数据
     (async () => {
-      if (!library || !account) return 
+      if (!library || !account) return
       const contract = new ethers.Contract(DAI_ADDRESS, ERC20_ABI, library);
 
       const _teams = [...teams]
@@ -438,8 +454,8 @@ function HeaderComponent() {
 }
 function PendingTx() {
   const { pendings } = React.useContext(MyContext)
-  const btns = pendings.map((item) => {
-    return <Button type="link" href={'https://ropsten.etherscan.io/tx/' + item} target="_blank" size='small'>{item}</Button>
+  const btns = pendings.map((item, index) => {
+    return <Button key={index} type="link" href={'https://ropsten.etherscan.io/tx/' + item} target="_blank" size='small'>{item}</Button>
   })
   const spin = <Spin />
   return pendings.length > 0 && <Alert
@@ -452,13 +468,65 @@ function PendingTx() {
   />
 }
 
+function WinnerModal() {
+  const { winnerModalVisible, setWinnerModalVisible } = React.useContext(MyContext)
+  const { teams, setTeams, pendings } = React.useContext(MyContext)
+  const { event, setEvent } = React.useContext(MyContext)
+  console.log(event);
+  if (event.winnerIndex == null) return (<></>);
+
+  const loseIndex = event.winnerIndex ? 0 : 1;
+  const win = teams[event.winnerIndex]
+  const lose = teams[loseIndex]
+  const redTop1 = '0xf40629b5F96567270794F0F29E55Ac9daDE14fFd'
+  const blueTop1 = '0xf40629b5F96567270794F0F29E55Ac9daDE14fFd'
+
+  const handleOk = e => {
+    setWinnerModalVisible(false)
+  };
+
+  const handleCancel = e => {
+    setWinnerModalVisible(false)
+  };
+  let state = 0
+  React.useEffect(() => {
+    if (event.winnerIndex != null && state == 0) {
+      state = 1
+      setWinnerModalVisible(true)
+    }
+  }, [])
+
+  return (
+    <Modal
+      title="已开奖"
+      visible={winnerModalVisible}
+      footer={null}
+      onOk={handleOk}
+      onCancel={handleCancel}
+      bodyStyle={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', paddingBottom: 50 }}
+    >
+      <Avatar src={win.img} size={100} style={{ margin: '30px auto' }} />
+      <Title level={3} style={{ textAlign: 'center' }}>{`选 ${win.name} 的获胜`}</Title>
+      <Row style={{ padding: '30px 0' }}>
+        <Col span={12}>      <Statistic title="瓜分奖金" value={lose.amount} precision={2} />
+        </Col>
+        <Col span={12}>      <Statistic title="利息奖金" value={event.income} precision={2} />
+        </Col>
+      </Row>
+      <div>红队 Top1: <Button type="link" href={'https://ropsten.etherscan.io/address/' + redTop1} target="_blank" size='small'>{redTop1}</Button> </div>
+      <div>蓝队 Top1: <Button type="link" href={'https://ropsten.etherscan.io/address/' + redTop1} target="_blank" size='small'>{blueTop1}</Button> </div>
+    </Modal>
+  )
+}
+
 const App: FC = () => {
   const context = useWeb3React<Web3Provider>()
   const { connector, library, chainId, account, activate, deactivate, active, error } = context
-  // handle logic to recognize the connector currently being activated
   const [activatingConnector, setActivatingConnector] = React.useState<any>()
   const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
   const [pendings, setPendings] = React.useState<string[]>([])
+  const [event, setEvent] = React.useState<{ income: number, winnerIndex: any }>({ income: 1, winnerIndex: null })  // 活动数据
+  const [winnerModalVisible, setWinnerModalVisible] = React.useState<boolean>(false)
   const [teams, setTeams] = React.useState<{ name: string, img: string, amount: number, color: string, supported: number }[]>(
     [{
       name: '川普',
@@ -512,14 +580,16 @@ const App: FC = () => {
     address: '0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6',
     amount: 123.12345,
   }]
-  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams }
+  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams, event, setEvent, winnerModalVisible, setWinnerModalVisible }
   return (
     <Provider value={APPContext}>
       <Layout className="layout">
         <ErrorCatch />
+        <WinnerModal />
         <Header className="header">
           <Row>
-            <Col span={21}><div className="logo" style={{ height: 60 }}><img src='logo2.png' width="200" height="100" /></div></Col>
+            <Col span={10}><Title level={2} style={{padding: '20px 0'}}>你猜,我猜不猜</Title></Col>
+            <Col span={11}></Col>
             <Col span={1}><ChainId /></Col>
             <Col span={2} style={{
               textAlign: 'right'
@@ -535,8 +605,8 @@ const App: FC = () => {
         <TEAMInfo />
 
         <Content className="site-layout-backgroud">
-          <div><Title>你猜,我猜不猜?</Title></div>
-          <div><Text type="secondary" style={{ fontSize: 32 }}>谁是下一届美国总统?</Text></div>
+          <div><Title>谁是下一届美国总统?</Title></div>
+          <div><Text type="secondary" style={{ fontSize:  20 }}>胜者赢得对手方的奖金，下注最多的人平分利息奖金</Text></div>
           <Row>
             {teams.map((item, index) => {
               return <Col key={index} span={24 / teams.length}>
@@ -587,15 +657,18 @@ const App: FC = () => {
                   {active ? (index == 0 ? <p>我已支持: <span>{item.supported}</span></p>
                     :
                     <p><span>{item.supported}</span>: 我已支持</p>) : ''}
-                  <TakeModal team={item} />
+                  {event.winnerIndex == null && <TakeModal team={item} />}
                 </Card>
               </Col>
             })}
           </Row>
-
-          <PendingTx />
-          <div style={{ padding: '30px 0' }}><Countdown title="下注截止时间" value={new Date('2020-08-11 00:00:00').getTime()} format="HH:mm:ss:SSS" /></div>
-
+          {event.winnerIndex != null &&
+            <Button type='default' size='large' onClick={() => { setWinnerModalVisible(true) }}>开奖详情</Button>}
+          {event.winnerIndex == null && <div>
+            <PendingTx />
+            <div style={{ padding: '30px 0' }}><Countdown title="下注截止时间" value={new Date('2020-08-11 00:00:00').getTime()} format="HH:mm:ss:SSS" /></div>
+          </div>
+          }
           <Divider />
 
           <div style={{ paddingTop: 30 }}><Title level={3}>利息奖金</Title></div>
@@ -623,6 +696,29 @@ const App: FC = () => {
               renderItem={(item, index) => <List.Item key={index}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#1890ff' }}>{item.amount} DAI</Text></List.Item>}
             />
           </div>
+        </Content>
+        <Content className="site-layout-backgroud-intro">
+          <div style={{ paddingTop: 30,textAlign:'center' }}><Title>HOPE TOKEN</Title></div>
+          <div style={{ textAlign: 'center', paddingBottom: 30 }}><Text type="secondary" style={{ fontSize: 20}}>小赌一把，即做平台股东</Text></div>
+          <Title level={4}>平台币简介</Title>
+          <Paragraph>
+            1. 下注任意数量 DAI，即获得 HOPE TOKEN <br/>
+            2. 发行总量固定：1 亿。不预挖，不增发<br />
+            3. 按照下注数量，发行递减。 <br />
+            4. 铸币公式：= 下注DAI / ((log2^已存入DAI总量) + 1)
+          </Paragraph>
+          <Title level={4}>收益</Title>
+          <Paragraph>
+            1. 对于每场对赌，平台收取收益的 3% <br />
+            2. 所有持有 HOPE 的用户可以分享 3% 收益<br />
+          </Paragraph>
+          <Title level={4}>流动性挖矿</Title>
+          <Paragraph>
+            1. 参与 Pool2，提供流动性，获得 BPT，用户 BPT staking <br />
+            2. Pool2 给所有持有 BPT 的用户每个高度发收益<br />
+            3. 在 Pool2 ，买入或者卖出 HOPE，获得 DAI<br />
+            4. 继续拿 DAI 去下注
+          </Paragraph>
         </Content>
         <Content className="site-layout-backgroud">
           <HeaderComponent />
@@ -763,7 +859,7 @@ const App: FC = () => {
             )}
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>PowerBy 全村的希望</Footer>
+        <Footer style={{ textAlign: 'center' }}><img src='logo2.png' width="200" height="100" /></Footer>
       </Layout>
     </Provider>
   )
