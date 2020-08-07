@@ -6,19 +6,22 @@ import {
 } from '@web3-react/injected-connector'
 import { UserRejectedRequestError as UserRejectedRequestErrorWalletConnect } from '@web3-react/walletconnect-connector'
 import { UserRejectedRequestError as UserRejectedRequestErrorFrame } from '@web3-react/frame-connector'
+import { ethers, BigNumber } from 'ethers'
 import { Web3Provider } from '@ethersproject/providers'
 import Balance from '../components/Balance'
 import TokenInfo from '../components/TokenInfo'
 import Approve from '../components/Approve'
 import Transfer from '../components/Transfer'
-import { Button, Alert, List, Divider, Spin, Statistic, Avatar, Card, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
+import { Button, Alert, Form, Input, List, Divider, Spin, Statistic, Avatar, Card, Modal, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
 import { Provider, MyContext } from '../context'
+import ERC20_ABI from '../components/erc20.abi.json'
 const { Title, Text, Link } = Typography;
 const { Countdown } = Statistic;
 const { Header, Content, Footer } = Layout;
 import { UserOutlined } from '@ant-design/icons';
 
 import { useEagerConnect, useInactiveListener } from '../hooks'
+const DAI_ADDRESS = '0xad6d458402f60fd3bd25163575031acdce07538d'
 
 
 import {
@@ -202,53 +205,114 @@ function Account(props) {
   )
 }
 function TakeModal(props) {
-  const { account, active} = useWeb3React<Web3Provider>()
-  const [visible, setVisible] = React.useState<boolean>(false)
-  const { setLoginModalVisible } = React.useContext(MyContext)
+  const { account, active, library } = useWeb3React<Web3Provider>()
+  const [takeModalVisible, setTakeModalVisible] = React.useState<boolean>(false)
+  const [confirmLoading, setConfirmLoading] = React.useState<boolean>(false)
+  const { pendings, setPendings, setLoginModalVisible } = React.useContext(MyContext)
   const handleLogin = () => {
-    if (!active){
+    if (!active) {
       setLoginModalVisible(true)
-    }else {
-      setVisible(true)
+    } else {
+      setTakeModalVisible(true)
     }
   }
+  const team = props.team;
+  const onFinish = values => {
+    console.log('Success:', values);
+  };
 
+  const onFinishFailed = errorInfo => {
+    console.log('Failed:', errorInfo);
+  };
+  const [form] = Form.useForm();
+  const onOk = values => {
+    setConfirmLoading(true);
+    (async () => {
+      try {
+        await form.validateFields()
+        const contract = new ethers.Contract(DAI_ADDRESS, ERC20_ABI, library.getSigner(account));
+        let amount = ethers.utils.parseUnits(form.getFieldValue('amount'));
+        const result = await contract.transfer('0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6', amount)
+        message.success('交易已广播：' + result.hash)
+        const list = [...pendings, result.hash]
+        setPendings(list)
+        setConfirmLoading(false);
+        setTakeModalVisible(false)
+        const tx = await library.waitForTransaction(result.hash, 1, 120 * 1000) // 1个高度确认，等待 2 分钟
+        const index = list.indexOf(tx.transactionHash)
+
+        if (index !== -1) {
+          list.splice(index, 1)
+          message.success('交易成功 ！')
+          setPendings([...list])
+        }
+      } catch (error) {
+        setConfirmLoading(true);
+        // @ts-ignore
+        if (error && error.code === 4001) {
+          return message.error('您已经取消了交易')
+        }
+      }
+    })();
+  };
   return <>
     <Button type="default" size='middle' onClick={handleLogin} style={{
-      background: props.color,
+      background: team.color,
       color: '#fff',
     }}>支持</Button>
-  <Modal
-    title="选择登录方式"
-    visible={visible}
-    footer={null}
-    onCancel={() => {
-      setVisible(false)
-    }
-    }>
-    <div
-      style={{
-        display: 'grid',
-        gridGap: '1rem',
-        gridTemplateColumns: '1fr 1fr',
-        maxWidth: '20rem',
-        margin: 'auto'
+    <Modal
+      title={'支持' + team.name}
+      visible={takeModalVisible}
+      okText='确定'
+      cancelText='取消'
+      onCancel={() => {
+        setTakeModalVisible(false)
       }}
+      onOk={onOk}
     >
-      xxxxxxx
-  </div>
-  </Modal>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'left'
+        }}
+      >
+        <Alert message="获胜后将瓜分对方奖金" type="success" />
+        <Form
+          wrapperCol={{ offset: 0, span: 24 }}
+          name="basic"
+          form={form}
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          style={{ width: 400, padding: '30px 0' }}
+        >
+          <Form.Item label="余额">
+            <span className="ant-form-text" style={{ fontSize: 16 }}>1234.12345</span>
+          </Form.Item>
+          <Form.Item
+            label="金额"
+            name="amount"
+            rules={[{ required: true, message: '至少输入 1 USDT' }]}
+          >
+            <Input addonAfter="USDT" />
+          </Form.Item>
+        </Form>
+      </div>
+    </Modal>
   </>
 }
 
+
+
 function LoginModal(props) {
   const context = useWeb3React<Web3Provider>()
-  const { loginModalVisible, setLoginModalVisible} = React.useContext(MyContext)
+  const { loginModalVisible, setLoginModalVisible } = React.useContext(MyContext)
   const { connector, activate, error } = context
 
   const handleLogin = () => {
     setLoginModalVisible(true)
-  } 
+  }
 
   return <>
     <Button type="primary" onClick={handleLogin}>连接钱包</Button>
@@ -317,6 +381,39 @@ function LoginModal(props) {
     </Modal>
   </>
 }
+function SupportAmount(props) {
+  const [takeDetail, setTakeDetail] = React.useState<any>(false)
+  const { account, active, library } = useWeb3React<Web3Provider>()
+  const contract = new ethers.Contract(DAI_ADDRESS, ERC20_ABI, library);
+
+  return (
+    <span>{takeDetail[props.teamName].support || 0}</span>
+  )
+}
+function TEAMInfo() {
+  const { teams, setTeams, pendings } = React.useContext(MyContext)
+  const { account, active, library, chainId } = useWeb3React<Web3Provider>();
+
+  React.useEffect(() => {
+    // 初始化 team 数据
+    (async () => {
+      if (!library || !account) return 
+      const contract = new ethers.Contract(DAI_ADDRESS, ERC20_ABI, library);
+
+      const _teams = [...teams]
+      const [name, symbol, balanceOf] = await Promise.all([
+        contract.name(),
+        contract.symbol(),
+        account ? contract.balanceOf(account) : undefined,
+      ]);
+      const amount = Number(ethers.utils.formatUnits(balanceOf)).toFixed(5)
+
+      _teams[0].supported = amount
+      setTeams(_teams);
+    })();
+  }, [pendings, account, library, chainId]);
+  return (<div></div>)
+}
 
 function HeaderComponent() {
   return (
@@ -341,7 +438,6 @@ function HeaderComponent() {
 }
 function PendingTx() {
   const { pendings } = React.useContext(MyContext)
-  console.log('pendings', pendings);
   const btns = pendings.map((item) => {
     return <Button type="link" href={'https://ropsten.etherscan.io/tx/' + item} target="_blank" size='small'>{item}</Button>
   })
@@ -355,6 +451,7 @@ function PendingTx() {
     icon={spin}
   />
 }
+
 const App: FC = () => {
   const context = useWeb3React<Web3Provider>()
   const { connector, library, chainId, account, activate, deactivate, active, error } = context
@@ -362,6 +459,21 @@ const App: FC = () => {
   const [activatingConnector, setActivatingConnector] = React.useState<any>()
   const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
   const [pendings, setPendings] = React.useState<string[]>([])
+  const [teams, setTeams] = React.useState<{ name: string, img: string, amount: number, color: string, supported: number }[]>(
+    [{
+      name: '川普',
+      color: '#ff6666',
+      img: './2.svg',
+      amount: 1,
+      supported: 0,
+    }, {
+      name: '拜登',
+      color: '#1890ff',
+      img: './1.svg',
+      amount: 1,
+      supported: 0,
+    }]
+  );
 
   React.useEffect(() => {
     if (activatingConnector && activatingConnector === connector) {
@@ -374,19 +486,6 @@ const App: FC = () => {
 
   // handle logic to connect in reaction to certain events on the injected ethereum provider, if it exists
   useInactiveListener(!triedEager || !!activatingConnector)
-  const teams = [{
-    name: '川普',
-    color: '#ff6666',
-    img: './2.svg',
-    amount: 1234.1,
-    supported: 100,
-  }, {
-    name: '拜登',
-    color: '#1890ff',
-    img: './1.svg',
-    amount: 3234.1,
-    supported: 20,
-  }]
   const redUsers = [{
     address: '0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6',
     amount: 123.12345,
@@ -413,33 +512,34 @@ const App: FC = () => {
     address: '0x51BFd7AD73960f980Bcb8d932B894Bd2c4c233c6',
     amount: 123.12345,
   }]
-  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings }
+  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams }
   return (
     <Provider value={APPContext}>
       <Layout className="layout">
         <ErrorCatch />
         <Header className="header">
           <Row>
-            <Col span={21}><div className="logo"><img src='logo.png' width="100" height="auto" style={{ padding: 20 }} /></div></Col>
+            <Col span={21}><div className="logo" style={{ height: 60 }}><img src='logo2.png' width="200" height="100" /></div></Col>
             <Col span={1}><ChainId /></Col>
             <Col span={2} style={{
               textAlign: 'right'
             }}>
               {active ?
-              (<Account deactivate={deactivate} />) :
-              (error ? <Button danger onClick={() => {
-                deactivate()
-              }}>错误，断开连接</Button> : <LoginModal triedEager={triedEager} activatingConnector={activatingConnector} setActivatingConnector={setActivatingConnector} />)}
+                (<Account deactivate={deactivate} />) :
+                (error ? <Button danger onClick={() => {
+                  deactivate()
+                }}>错误，断开连接</Button> : <LoginModal triedEager={triedEager} activatingConnector={activatingConnector} setActivatingConnector={setActivatingConnector} />)}
             </Col>
           </Row>
-
         </Header>
+        <TEAMInfo />
+
         <Content className="site-layout-backgroud">
-          <div><Title>Winners Take All</Title></div>
+          <div><Title>你猜,我猜不猜?</Title></div>
           <div><Text type="secondary" style={{ fontSize: 32 }}>谁是下一届美国总统?</Text></div>
           <Row>
-            {teams.map((item) => {
-              return <Col span={24 / teams.length}>
+            {teams.map((item, index) => {
+              return <Col key={index} span={24 / teams.length}>
                 <Avatar src={item.img} size={150} style={{ margin: '30px 0' }} />
                 <Title level={4}>{item.name}</Title>
               </Col>
@@ -476,7 +576,7 @@ const App: FC = () => {
           </Row>
           <Row style={{ width: 600, margin: '0 auto' }}>
             {teams.map((item, index) => {
-              return <Col span={24 / teams.length}>
+              return <Col key={index} span={24 / teams.length}>
                 <Card bordered={false} style={{ width: 300, textAlign: !index ? 'left' : 'right' }}>
                   <span>已下注</span>
                   <Title level={2} style={{ color: item.color, marginTop: 0 }}>${item.amount}</Title>
@@ -484,10 +584,10 @@ const App: FC = () => {
                     :
                     <p><span>{((teams[0].amount + teams[1].amount - item.amount) / item.amount * 100).toFixed(2)}%</span>: 收益率</p>}
 
-                  {index == 0 ? <p>我已支持: <span>{item.supported}</span></p>
+                  {active ? (index == 0 ? <p>我已支持: <span>{item.supported}</span></p>
                     :
-                    <p><span>{item.supported}</span>: 我已支持</p>}
-                  <TakeModal color={item.color}/>
+                    <p><span>{item.supported}</span>: 我已支持</p>) : ''}
+                  <TakeModal team={item} />
                 </Card>
               </Col>
             })}
@@ -510,7 +610,7 @@ const App: FC = () => {
               bordered
               dataSource={redUsers}
               style={{ width: 400 }}
-              renderItem={(item, index) => <List.Item key={item.id}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#ff6666' }}>{item.amount} DAI</Text></List.Item>}
+              renderItem={(item, index) => <List.Item key={index}><Text>{item.address.substr(0, 6) + '...' + item.address.substr(item.address.length - 4, 4)}{index == 0 && <span style={{ fontSize: 30 }}>🏅</span>}</Text><Text style={{ fontSize: 16, color: '#ff6666' }}>{item.amount} DAI</Text></List.Item>}
             />
 
             <List
@@ -526,8 +626,8 @@ const App: FC = () => {
         </Content>
         <Content className="site-layout-backgroud">
           <HeaderComponent />
-          <Approve address="0xad6d458402f60fd3bd25163575031acdce07538d" />
-          <Transfer address="0xad6d458402f60fd3bd25163575031acdce07538d" />
+          <Approve address={DAI_ADDRESS} />
+          <Transfer address={DAI_ADDRESS} />
 
 
           <div
@@ -663,7 +763,7 @@ const App: FC = () => {
             )}
           </div>
         </Content>
-        <Footer style={{ textAlign: 'center' }}>PowerBy 复仇者联盟</Footer>
+        <Footer style={{ textAlign: 'center' }}>PowerBy 全村的希望</Footer>
       </Layout>
     </Provider>
   )
