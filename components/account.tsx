@@ -25,7 +25,7 @@ export default function Account(props) {
         <span role="img" aria-label="robot">
           <Avatar size={32} icon={<UserOutlined />} />
         </span>
-        <span>
+        <span style={{color: '#fff'}}>
           {account === null
             ? '-'
             : account

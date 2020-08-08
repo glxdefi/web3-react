@@ -2,7 +2,22 @@
 
 body {
   font-family: sans-serif;
-  background-color: #2C2B3B;
+  color: #fff;
+  background: #de6161;
+  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to bottom, #2657eb, #de6161);
+  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to bottom, #2657eb, #de6161);
+  /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+
+.anticon {
+  color: #131427
+}
+
+.ant-layout {
+  background-color: #131427;
 }
 
 .logo {
@@ -11,7 +26,7 @@ body {
 }
 
 .header {
-  background: #f0f2f5;
+  background-color: #131427;
 }
 
 .site-layout-backgroud {
@@ -20,6 +35,7 @@ body {
   width: 1100px;
   text-align: center;
   margin: 20px auto;
+  border-radius: 10px;
 }
 
 .site-layout-backgroud-intro {

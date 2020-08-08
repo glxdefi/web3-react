@@ -38,6 +38,7 @@ function GameInfo() {
       c.trueAmountMap(account),
       c.falseAmountMap(account),
     ]);
+
     let _endBlockNumber = Number(endBlockNumber.toString())
     const gameInfo = {
       isGameResultOpen,
@@ -51,24 +52,43 @@ function GameInfo() {
       startBlockNumber: formatUnits(startBlockNumber,'wei'),
       endBlockNumber: formatUnits(endBlockNumber, 'wei'),
       blockHeight: getBlockNumber,
+      interestIncome:0,
+      shareHolderProfit: 0,
+      winPrincipalProfit: 0,
+      gameResult: null,
+      isExistIncomeNeedReceive: false,
       teamRed: {
-        name: `能`,
+        name: `大于目标值`,
         color: '#ff6666',
-        img: './2.svg',
+        img: './3.png',
         amount: formatUnits(trueTotalAmount),
         supported: formatEther(trueAmountMap),
         userCount: trueTotalCount.toString(),
         direction: true
       },
       teamBlue: {
-        name: `不能`,
+        name: `小于目标值`,
         color: '#1890ff',
-        img: './1.svg',
+        img: './4.png',
         amount: formatUnits(falseTotalAmount),
         supported: formatEther(trueAmountMap),
         userCount: falseTotalCount.toString(),
         direction: false
       }
+    }
+    if (isGameResultOpen) {
+      const [interestIncome, shareHolderProfit, winPrincipalProfit, gameResult, isExistIncomeNeedReceive] = await Promise.all([
+        c.interestIncome(),
+        c.shareHolderProfit(),
+        c.winPrincipalProfit(),
+        c.gameResult(),
+        c.isExistIncomeNeedReceive()
+      ])
+      gameInfo.interestIncome = interestIncome 
+      gameInfo.shareHolderProfit = shareHolderProfit
+      gameInfo.winPrincipalProfit = winPrincipalProfit
+      gameInfo.gameResult = gameResult
+      gameInfo.isExistIncomeNeedReceive = isExistIncomeNeedReceive  //是否存在可提取收益
     }
     console.log(gameInfo);
     setGame(gameInfo);

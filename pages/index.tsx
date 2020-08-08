@@ -1,9 +1,7 @@
 import React, { FC } from 'react'
 import { Web3ReactProvider, useWeb3React } from '@web3-react/core'
 import { Web3Provider } from '@ethersproject/providers'
-import ethers from 'ethers'
-import moment from 'moment'
-import { BlockNumber, Balance, Approve, TokenInfo, Transfer, GameInfo, Spinner, ErrorCatch, 
+import { Approve, TokenInfo, Transfer, GameInfo,  ErrorCatch, 
   Account, WinnerModal, TakeModal, LoginModal } from '../components'
 import { Button, Alert, Divider, Spin, Statistic, Avatar, Card, Progress, Tag, Typography, notification, message, Space, Layout, Menu, Dropdown, Row, Col } from 'antd';
 import { Provider, MyContext } from '../context'
@@ -94,7 +92,6 @@ const App: FC = () => {
   const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
   const [pendings, setPendings] = React.useState<string[]>([])
   const [contracts, setContracts] = React.useState<string[]>([]) // 所有合约数据
-  const [event, setEvent] = React.useState<{ income: number, winnerIndex: any }>({ income: 1, winnerIndex: null })  // 活动数据
   const [winnerModalVisible, setWinnerModalVisible] = React.useState<boolean>(false)
   const [teams, setTeams] = React.useState<{ name: string, img: string, amount: number, color: string, supported: number }[]>(
     [{
@@ -135,7 +132,7 @@ const App: FC = () => {
   // handle logic to connect in reaction to certain events on the injected ethereum provider, if it exists
   useInactiveListener(!triedEager || !!activatingConnector)
   
-  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams, event, setEvent, winnerModalVisible, setWinnerModalVisible, contracts, setContracts, game, setGame}
+  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams, winnerModalVisible, setWinnerModalVisible, contracts, setContracts, game, setGame}
   
   return (
     <Provider value={APPContext}>
@@ -143,9 +140,9 @@ const App: FC = () => {
 
         <Header className="header">
           <Row>
-            <Col span={10}><Title level={2} style={{padding: '20px 0'}}>希望</Title></Col>
-            <Col span={2} offset={8}><ChainId /></Col>
-            <Col span={4} style={{
+            <Col span={10}><Title level={2} style={{padding: '20px 0'}}></Title></Col>
+            <Col span={1} offset={11}><ChainId /></Col>
+            <Col span={2} style={{
               textAlign: 'right'
             }}>
               { active ?
@@ -158,14 +155,14 @@ const App: FC = () => {
           </Row>
         </Header>
         <Content className="site-layout-backgroud">
-          <div><Title>夺宝竞猜</Title></div>
+          <div><Title style={{fontSize: 64}}>夺宝竞猜</Title></div>
           <div><Text type="secondary" style={{ fontSize: 20 }}>指定块高能否达到目标发行量？</Text></div>
         
           <div style={{ padding: '15px 0' }}>
           </div>
           <Row gutter={24} style={{ marginTop: 20}} >
             <Col span={8}>
-              <span>竞猜 Token</span>
+              <Text>竞猜 Token</Text>
               <div ><Button type="link" href={'https://ropsten.etherscan.io/address/' + game.gameObjectToken} target="_blank" size='small' style={{lineHeight: '40px', fontSize: 20}}>DAI</Button></div>
             </Col>
             <Col span={8}>
@@ -195,17 +192,19 @@ const App: FC = () => {
           </Row>
         </div>
         <Content className="site-layout-backgroud">
-          <div><Title level={2} style={{ fontSize: 20 }}>胜者赢得对手方的奖金，下注最多的人独得利息奖金</Title></div>
+          <div><Title level={2}>谁赢得奖金？</Title></div>
           <Row>
-            {
-              [game.teamRed, game.teamBlue].map((item, index) => {
-                return (<Col key={index} span={12}>
-                  <Avatar src={item.img} size={150} style={{ margin: '30px 0' }} />
-                  <Title level={4}>{item.name}</Title>
-                </Col>)
-              })
-            }
-            
+            <Col span={4} offset={4}>
+              <img src={game.teamRed.img} style={{ width: 150, height: 130, margin: '30px 0' }} />
+              <Title level={4} style={{paddingTop:20}}>{game.teamRed.name}</Title>
+            </Col>
+            <Col  span={8}>
+              <img src="vs.png" width="200" alt="" style={{marginTop: 30}} />
+            </Col>
+            <Col span={4}>
+              <img src={game.teamBlue.img} style={{ width: 150, height: 150, margin: '30px 0' }} />
+              <Title level={4}>{game.teamBlue.name}</Title>
+            </Col>
           </Row>
           <div className="progressBar" style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{
@@ -262,17 +261,17 @@ const App: FC = () => {
                       <p><span style={{ fontSize: 20 }}>{item.supported}</span>: 我已支持</p>)
                     : ''
                   }
-                  {event.winnerIndex == null && game.leftHeight != 0 &&  <TakeModal team={item} />}
+                  {game.gameResult == null && game.leftHeight != 0 &&  <TakeModal team={item} />}
                 </Card>
               </Col>
             })}
           </Row>
-          {event.winnerIndex != null &&
-            <Button type='default'ize='large' onClick={() => { setWinnerModalVisible(true) }}>开奖详情</Button>}
-          {event.winnerIndex == null && <div>
+          {game.gameResult == null &&
+            <Button type='primary' size='large' onClick={() => { setWinnerModalVisible(true) }}>开奖详情</Button>}
+          <div>
             <PendingTx />
           </div>
-          }
+          
           <Divider />
 
           <div style={{ paddingTop: 30 }}><Title level={3}>锦鲤大奖</Title></div>
@@ -281,8 +280,8 @@ const App: FC = () => {
           <div style={{ height: 100 }}>              
             <Row style={{ marginTop: 20 }} >
               <Col span={6} offset={6}>
-                <span>当前 TOP1</span>
-                {game.maxAmountAccount && <Title> <Button type="link" href={'https://ropsten.etherscan.io/address/' + game.maxAmountAccount} target="_blank" size='small'>{game.maxAmountAccount.substr(0, 6) + '...' + game.maxAmountAccount.substr(game.maxAmountAccount.length-4, 4)}</Button></Title>}
+                <Text>当前 TOP1</Text>
+                {game.maxAmountAccount && <div style={{lineHeight:'50px'}}><Button type="link" href={'https://ropsten.etherscan.io/address/' + game.maxAmountAccount} target="_blank" size='small'>{game.maxAmountAccount.substr(0, 6) + '...' + game.maxAmountAccount.substr(game.maxAmountAccount.length - 4, 4)}</Button></div>}
               </Col>
               <Col span={6}>
                 {game.maxAmount && <Statistic title="下注金额：" value={game.maxAmount} />}
@@ -318,7 +317,7 @@ const App: FC = () => {
                   1. 参与 Pool2，提供流动性，获得 BPT，用户 BPT staking <br />
                   2. Pool2 给所有持有 BPT 的用户每个高度发收益<br />
                   3. 在 Pool2 ，买入或者卖出 HOPE，获得 DAI<br />
-                  4. 继续拿 DAI 去下注
+                  4. 继续拿 DAI 去下注，获得 HOPE，获得
                 </Paragraph>
               }].map((item) => {
                 return (
