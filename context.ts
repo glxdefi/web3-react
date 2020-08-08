@@ -10,6 +10,10 @@ export const MyContext = React.createContext({
   event: Object,
   setEvent: undefined,
   winnerModalVisible: false, 
-  setWinnerModalVisible: undefined
+  setWinnerModalVisible: undefined,
+  contracts:[Object],
+  setContracts: undefined,
+  game: [Object],
+  setGame: undefined,
 });
 export const Provider = MyContext.Provider

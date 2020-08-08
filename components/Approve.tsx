@@ -2,17 +2,14 @@
 import React from 'react'
 import { Web3Provider } from '@ethersproject/providers';
 import {useWeb3React } from '@web3-react/core'
-import { formatEther } from '@ethersproject/units'
-import { ethers, BigNumber, FixedNumber} from 'ethers'
-import { Form, Input, message, Button, Modal } from 'antd';
+
+import { Form, message, Button } from 'antd';
 
 import { MyContext } from '../context'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const ERC20_ABI = require('./erc20.abi.json');
-
-function Approve({ address }: { address: string }) {
+function Approve({ address }: { address?: string }) {
   const { library, account, chainId} = useWeb3React<Web3Provider>();
+  const { contracts } = React.useContext(MyContext)
 
   const layout = {
     labelCol: { span: 4 },
@@ -25,11 +22,11 @@ function Approve({ address }: { address: string }) {
 
 
   const onFinish = values => {
-    const contract = new ethers.Contract(address, ERC20_ABI, library.getSigner(account));
+    const contract = contracts['DAI']
     // let amount = ethers.utils.parseUnits(values.amount);
       (async () => {
         try {
-          const result = await contract.approve('d719c34261e099fdb33030ac8909d5788d3039c4', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+          const result = await contract.approve('0xf72211d9142BB681f15C006479060d04e47F698d', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
           message.success('交易已广播：' + result.hash)
           const tx = await library.waitForTransaction(result.hash, 1 ,120 * 1000) // 1个高度确认，等待 2 分钟
           console.log(tx);

@@ -11,7 +11,7 @@ import { MyContext } from '../context'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const ERC20_ABI = require('./erc20.abi.json');
 
-function Transfer({ address }: { address: string }) {
+function Transfer({ address }: { address?: string }) {
   const { library, account, chainId} = useWeb3React<Web3Provider>();
   const { pendings, setPendings } = React.useContext(MyContext)
 
