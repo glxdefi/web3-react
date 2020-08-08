@@ -133,7 +133,9 @@ const App: FC = () => {
   useInactiveListener(!triedEager || !!activatingConnector)
   
   const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams, winnerModalVisible, setWinnerModalVisible, contracts, setContracts, game, setGame}
-  
+  const redWidth = 700 * game.teamRed.amount / (+game.teamRed.amount + +game.teamBlue.amount) || 700/2;
+  const blueWidth = 700 * game.teamBlue.amount / (+game.teamRed.amount + +game.teamBlue.amount) || 700 / 2;
+
   return (
     <Provider value={APPContext}>
       <Layout className="layout">
@@ -208,7 +210,7 @@ const App: FC = () => {
           </Row>
           <div className="progressBar" style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              width: 750 * game.teamRed.amount / (game.teamRed.amount + game.teamBlue.amount),
+              width: redWidth,
               height: 30,
               background: game.teamRed.color,
               borderRadius: '15px 0 0 15px'
@@ -219,7 +221,7 @@ const App: FC = () => {
               }}>{(game.teamRed.amount / (game.teamRed.amount + game.teamBlue.amount) * 100).toFixed(2) + '%'}</span>
             </div>
             <div style={{
-              width: 750 * game.teamBlue.amount / (game.teamBlue.amount + game.teamBlue.amount),
+              width: blueWidth,
               height: 30,
               background: game.teamBlue.color,
               borderRadius: '0 15px 15px 0'

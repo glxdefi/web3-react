@@ -26,11 +26,12 @@ const CONTRACTS = {
     address: "0x213f526876932CE71CE264d242977b0076E93eE4", abi: GLXFactory.abi
   },
   "GLXGame": {
-    address: "0xaf1534cbD8571bE3b9Fa440A68a7E59CeFF2bde7", abi: GLXGame.abi
+    address: "0x4f25a03e1d54eeab15cbffc058a60b797253f789", abi: GLXGame.abi
   }
 }
-  // 押注： 0x4f25a03e1d54eeab15cbffc058a60b797253f789
-// - Game2（demo提取收益）: 0x461047A961Dff529CAa0Ed4503916d30ec8EDbFa
+// - Game1（明天demo 押注）: 0x4f25a03e1d54eeab15cbffc058a60b797253f789
+// - Game2（测试 提取收益）: 0xaf1534cbD8571bE3b9Fa440A68a7E59CeFF2bde7
+// - Game3（明天demo 提取收益）: 0xb91211a4e0d04b77a9949df69f8ac0b85084ec87
 
 function getContract(name, web3): ethers.Contract {
   return new ethers.Contract(CONTRACTS[name]['address'], CONTRACTS[name]['abi'], web3);
