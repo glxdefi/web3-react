@@ -11,23 +11,26 @@ const GLXRouter = require('./abi/GLXRouter.json');
 const GLXGame = require('./abi/GLXGame.json');
 
 const CONTRACTS = {
-  "HOPE": { address: "0x07cb0142D9b8fce61a321cffAf2c3a09933B1C37", abi: ERC20_ABI.abi },
+  "HOPE": {
+    address: "0xC2242d5135b8bF97079AD9A198358F9c3361f6f1", abi: ERC20_ABI.abi },
   "DAI": {
-    address: "0xa2Fd9953b79171e32C9895DD7b538c0ccac75628", abi: DAI.abi
+    address: "0x21717B701dec71178fb0dad4886bfE319E935823", abi: DAI.abi
   },
   "CDAI": {
-    address: "0x1D7DC6Ab4B122eF3398E134C15ebD6A3A0771DAd", abi: DAI.abi
+    address: "0x55b9F1f0c30d5E5c35E45d0F418a1d89bE9557D8", abi: DAI.abi
   },
   "GLXRouter": {
-    address: "0xf72211d9142BB681f15C006479060d04e47F698d", abi: GLXRouter.abi
+    address: "0x64E1FbDE3a56d49C766e4F8Bb6f638f60b0aD91C", abi: GLXRouter.abi
   },
   "GLXFactory": {
-    address: "0x109f60d6716E798bb198Bc0ce2B2a26cf8855b33", abi: GLXFactory.abi
+    address: "0x213f526876932CE71CE264d242977b0076E93eE4", abi: GLXFactory.abi
   },
   "GLXGame": {
-    address: "0x349fD926873Ea0FEd77424a0536adFb0CB16c2e9", abi: GLXGame.abi
+    address: "0xaf1534cbD8571bE3b9Fa440A68a7E59CeFF2bde7", abi: GLXGame.abi
   }
 }
+  // 押注： 0x4f25a03e1d54eeab15cbffc058a60b797253f789
+// - Game2（demo提取收益）: 0x461047A961Dff529CAa0Ed4503916d30ec8EDbFa
 
 function getContract(name, web3): ethers.Contract {
   return new ethers.Contract(CONTRACTS[name]['address'], CONTRACTS[name]['abi'], web3);

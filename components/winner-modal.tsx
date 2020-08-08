@@ -14,15 +14,14 @@ export default function WinnerModal() {
 
   const { account, library } = context
 
-  // if (game.gameResult == null) return (<></>);  // for test
-
-  const c = contracts['Game'];
+  if (!game.isGameResultOpen) return (<></>);
 
   const win = game.gameResult == true ? game.teamRed : game.teamBlue
   const handleOk = e => {
     setConfirmLoading(true);
     (async () => {
       try {
+        const c = contracts['Game'];
         const result = await c.receiveIncome(account)
         message.success('交易已广播：' + result.hash)
         const list = [...pendings, result.hash]
@@ -55,19 +54,22 @@ export default function WinnerModal() {
       title="已开奖"
       visible={winnerModalVisible}
       onOk={handleOk}
-      footer={game.isExistIncomeNeedReceive}
-      okText='提取我的收益'
+      confirmLoading={confirmLoading}
+      okText={game.isExistIncomeNeedReceive ? '提取我的收益':'确定'}
+      cancelText={'取消'}
       onCancel={handleCancel}
       bodyStyle={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', paddingBottom: 50 }}
     >
       <Avatar src={win.img} size={100} style={{ margin: '10px auto' }} />
-      <Title level={3} style={{ textAlign: 'center' }}>{`选 ${win.name} 的获胜`}</Title>
+      <Title level={3} style={{ textAlign: 'center' }}>{`选「${win.name}」的获胜`}</Title>
       <Row style={{ padding: '30px 0' }}>
-        <Col span={8}>      <Statistic title="瓜分奖金" value={game.winPrincipalProfit} precision={2} />
+        <Col span={6}>      <Statistic title="我的奖金" value={game.getIncomeAmount} precision={2} />
+        </Col>     
+        <Col span={6}>      <Statistic title="瓜分奖金" value={game.winPrincipalProfit} precision={2} />
         </Col>
-        <Col span={8}>      <Statistic title="Hope股东收益" value={game.shareHolderProfit} precision={2} />
+        <Col span={6}>      <Statistic title="Hope股东收益" value={game.shareHolderProfit} precision={2} />
         </Col>
-        <Col span={8}>      <Statistic title="Top1 锦鲤奖金" value={game.interestIncome} precision={2} />
+        <Col span={6}>      <Statistic title="Top1 锦鲤奖金" value={game.interestIncome} precision={2} />
         </Col>
       </Row>
     </Modal>

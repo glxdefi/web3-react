@@ -92,7 +92,7 @@ const App: FC = () => {
   const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
   const [pendings, setPendings] = React.useState<string[]>([])
   const [contracts, setContracts] = React.useState<string[]>([]) // 所有合约数据
-  const [winnerModalVisible, setWinnerModalVisible] = React.useState<boolean>(false)
+  const [winnerModalVisible, setWinnerModalVisible] = React.useState<boolean>(true)
   const [teams, setTeams] = React.useState<{ name: string, img: string, amount: number, color: string, supported: number }[]>(
     [{
       name: '川普',
@@ -155,8 +155,8 @@ const App: FC = () => {
           </Row>
         </Header>
         <Content className="site-layout-backgroud">
-          <div><Title style={{fontSize: 64}}>夺宝竞猜</Title></div>
-          <div><Text type="secondary" style={{ fontSize: 20 }}>指定块高能否达到目标发行量？</Text></div>
+          <div><Title style={{fontSize: 64}}>预言市场</Title></div>
+          <div><Text type="secondary" style={{ fontSize:  24 }}>指定块高能否达到目标发行量？</Text></div>
         
           <div style={{ padding: '15px 0' }}>
           </div>
@@ -208,7 +208,7 @@ const App: FC = () => {
           </Row>
           <div className="progressBar" style={{ display: 'flex', justifyContent: 'center' }}>
             <div style={{
-              width: 600 * game.teamRed.amount / (game.teamRed.amount + game.teamBlue.amount),
+              width: 750 * game.teamRed.amount / (game.teamRed.amount + game.teamBlue.amount),
               height: 30,
               background: game.teamRed.color,
               borderRadius: '15px 0 0 15px'
@@ -219,7 +219,7 @@ const App: FC = () => {
               }}>{(game.teamRed.amount / (game.teamRed.amount + game.teamBlue.amount) * 100).toFixed(2) + '%'}</span>
             </div>
             <div style={{
-              width: 600 * game.teamBlue.amount / (teams[0].amount + game.teamBlue.amount),
+              width: 750 * game.teamBlue.amount / (game.teamBlue.amount + game.teamBlue.amount),
               height: 30,
               background: game.teamBlue.color,
               borderRadius: '0 15px 15px 0'
@@ -261,12 +261,12 @@ const App: FC = () => {
                       <p><span style={{ fontSize: 20 }}>{item.supported}</span>: 我已支持</p>)
                     : ''
                   }
-                  {game.gameResult == null && game.leftHeight != 0 &&  <TakeModal team={item} />}
+                  {!game.isGameResultOpen && game.leftHeight != 0 &&  <TakeModal team={item} />}
                 </Card>
               </Col>
             })}
           </Row>
-          {game.gameResult == null &&
+          {game.isGameResultOpen &&
             <Button type='primary' size='large' onClick={() => { setWinnerModalVisible(true) }}>开奖详情</Button>}
           <div>
             <PendingTx />

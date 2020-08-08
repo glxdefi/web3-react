@@ -22,11 +22,12 @@ function Approve({ address }: { address?: string }) {
 
 
   const onFinish = values => {
-    const contract = contracts['DAI']
+    const c = contracts['DAI']
+    console.log(c);
     // let amount = ethers.utils.parseUnits(values.amount);
       (async () => {
         try {
-          const result = await contract.approve('0xf72211d9142BB681f15C006479060d04e47F698d', '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+          const result = await c.approve(contracts.CONTRACTS.GLXRouter.address, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
           message.success('交易已广播：' + result.hash)
           const tx = await library.waitForTransaction(result.hash, 1 ,120 * 1000) // 1个高度确认，等待 2 分钟
           console.log(tx);

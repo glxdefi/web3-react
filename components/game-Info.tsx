@@ -12,7 +12,6 @@ let timeref = null;
 function GameInfo() {
   const { game, setGame, pendings, contracts } = React.useContext(MyContext)
   const { account, active, library, chainId } = useWeb3React<Web3Provider>();
- 
   const getGameInfo = async (c, d) => {
     const [isGameResultOpen, isOnChainGame, gameObjectToken, gameObjectTokenSupply,
       trueTotalAmount, falseTotalAmount, trueTotalCount, falseTotalCount, maxAmount,
@@ -57,6 +56,8 @@ function GameInfo() {
       winPrincipalProfit: 0,
       gameResult: null,
       isExistIncomeNeedReceive: false,
+      getIncomeAmount:0,
+      isReceivedMap: true,
       teamRed: {
         name: `大于目标值`,
         color: '#ff6666',
@@ -71,24 +72,28 @@ function GameInfo() {
         color: '#1890ff',
         img: './4.png',
         amount: formatUnits(falseTotalAmount),
-        supported: formatEther(trueAmountMap),
+        supported: formatEther(falseAmountMap),
         userCount: falseTotalCount.toString(),
         direction: false
       }
     }
     if (isGameResultOpen) {
-      const [interestIncome, shareHolderProfit, winPrincipalProfit, gameResult, isExistIncomeNeedReceive] = await Promise.all([
+      const [interestIncome, shareHolderProfit, winPrincipalProfit, gameResult, isExistIncomeNeedReceive, getIncomeAmount, isReceivedMap] = await Promise.all([
         c.interestIncome(),
         c.shareHolderProfit(),
         c.winPrincipalProfit(),
         c.gameResult(),
-        c.isExistIncomeNeedReceive()
+        c.isExistIncomeNeedReceive(account),
+        c.getIncomeAmount(account),
+        c.isReceivedMap(account)  // 是否已经领取 false表示未领取，true表示已经领取
       ])
-      gameInfo.interestIncome = interestIncome 
-      gameInfo.shareHolderProfit = shareHolderProfit
-      gameInfo.winPrincipalProfit = winPrincipalProfit
+      console.log('isExistIncomeNeedReceive', isExistIncomeNeedReceive, isReceivedMap);
+      gameInfo.interestIncome = formatUnits(interestIncome)
+      gameInfo.shareHolderProfit = formatUnits(shareHolderProfit)
+      gameInfo.winPrincipalProfit = formatUnits(winPrincipalProfit)
+      gameInfo.getIncomeAmount = formatUnits(getIncomeAmount)
       gameInfo.gameResult = gameResult
-      gameInfo.isExistIncomeNeedReceive = isExistIncomeNeedReceive  //是否存在可提取收益
+      gameInfo.isExistIncomeNeedReceive = isExistIncomeNeedReceive && !isReceivedMap  //是否存在可提取收益
     }
     console.log(gameInfo);
     setGame(gameInfo);
@@ -104,7 +109,7 @@ function GameInfo() {
       if (timeref)  {
         clearInterval(timeref)
       }
-     timeref = setInterval(() => getGameInfo(c,d), 30*1000)
+     timeref = setInterval(() => getGameInfo(c,d), 60*1000)
       
     })();
   }, [pendings, account, library, chainId, contracts]);
