@@ -7,7 +7,7 @@ import { MyContext } from '../context'
 import { formatUnits, formatEther } from '../utils'
 
 function TokenInfo({ address }: { address?: string }) {
-  const { library, account, chainId} = useWeb3React<Web3Provider>();
+  const { library, account, chainId, active} = useWeb3React<Web3Provider>();
   const { contracts, pendings, tokenDetails, setTokenDetails } = React.useContext(MyContext)
   React.useEffect(() => {
     if (!!library && account) {
@@ -24,7 +24,7 @@ function TokenInfo({ address }: { address?: string }) {
         setTokenDetails({ HopeBalanceOf: _HopeBalanceOf, totalSupply: _totalSupply});
       })();
     }
-  }, [account, address, library, chainId, pendings, contracts.HOPE]);
+  }, [account, address, active, pendings, contracts.HOPE]);
 
   return (
     <div>
