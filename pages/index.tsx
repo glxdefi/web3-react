@@ -60,11 +60,11 @@ function HeaderComponent() {
           margin: 'auto'
         }}
       >
+        <GameInfo />
         <TokenInfo />
         <Contracts />
         <ErrorCatch />
         <WinnerModal />
-        <GameInfo />
       </h3>
     </>
   )
@@ -147,7 +147,7 @@ const App: FC = () => {
         </Header>
         <Content className="site-layout-backgroud">
           <div><Title style={{fontSize: 64}}>预言市场</Title></div>
-          <div><Text type="secondary" style={{ fontSize:  24 }}>指定块高能否达到目标发行量？</Text></div>
+          <div><Text type="secondary" style={{ fontSize:  24 }}> 预测 DAI 的数量</Text></div>
         
           <div style={{ padding: '15px 0' }}>
           </div>
@@ -183,7 +183,8 @@ const App: FC = () => {
           </Row>
         </div>
         <Content className="site-layout-backgroud">
-          <div><Title level={2}>谁赢得奖金？</Title></div>
+          <div><Title level={2}>{`DAI 的发行量能否达到${game.gameObjectTokenSupply}?`}</Title></div>
+          <div><Text>{`预测块高：${game.endBlockNumber || 0}`}</Text></div>
           <Row>
             <Col span={4} offset={4}>
               <img src={game.teamRed.img} style={{ width: 150, height: 130, margin: '30px 0' }} />
@@ -237,9 +238,9 @@ const App: FC = () => {
                     <p><span style={{ fontSize: 20 }}>{earnings}%</span>: 收益率</p>
                   }
                   {index == 0 ?
-                    <p>参与人数: <span style={{ fontSize: 20 }}>{item.userCount}</span></p>
+                    <p>参与人次: <span style={{ fontSize: 20 }}>{item.userCount}</span></p>
                     :
-                    <p><span style={{ fontSize: 20 }}>{item.userCount}</span>: 参与人数</p>
+                    <p><span style={{ fontSize: 20 }}>{item.userCount}</span>: 参与人次</p>
                   }
                   { active ? 
                     (index == 0 ? 
@@ -293,9 +294,9 @@ const App: FC = () => {
                 icon: BlockOutlined,
               desc: <Paragraph>
                   1. 下注任意数量 DAI，即获得 HOPE TOKEN <br />
-                  2. 发行总量固定：1 亿。不预挖，不增发<br />
+                  2. 发行总量趋近极值。不预挖，不增发<br />
                   3. 按照下注数量，发行递减。 <br />
-                  4. 铸币公式：= 下注DAI / ((log2^已存入DAI总量) + 1)
+                  4. 铸币公式：= 100 * amount / ( (turnNumber / 10)  + 1)  / discount ,社区决定 discount
                   </Paragraph>
               },
               {

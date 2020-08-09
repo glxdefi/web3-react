@@ -12,7 +12,7 @@ let timeref = null;
 function GameInfo() {
   const { game, setGame, pendings, contracts } = React.useContext(MyContext)
   const { account, active, library, chainId } = useWeb3React<Web3Provider>();
-  const getGameInfo = async (c, d) => {
+  const getGameInfo = async (c, d, getLibrary) => {
     const [isGameResultOpen, isOnChainGame, gameObjectToken, gameObjectTokenSupply,
       trueTotalAmount, falseTotalAmount, trueTotalCount, falseTotalCount, maxAmount,
       maxAmountAccount, daiCurrent,
@@ -33,9 +33,9 @@ function GameInfo() {
       d?.totalSupply(),
       c.startBlockNumber(),
       c.endBlockNumber(),
-      library.getBlockNumber(),
-      c.trueAmountMap(account),
-      c.falseAmountMap(account),
+      getLibrary().getBlockNumber(),
+      account && c.trueAmountMap(account),
+      account && c.falseAmountMap(account),
     ]);
     let _endBlockNumber = Number(endBlockNumber.toString())
     const gameInfo = {
@@ -61,8 +61,8 @@ function GameInfo() {
         name: `大于目标值`,
         color: '#ff6666',
         img: './3.png',
-        amount: formatUnits(trueTotalAmount),
-        supported: formatEther(trueAmountMap),
+        amount: formatUnits(trueTotalAmount || 0),
+        supported: formatEther(trueAmountMap || 0),
         userCount: trueTotalCount.toString(),
         direction: true
       },
@@ -70,8 +70,8 @@ function GameInfo() {
         name: `小于目标值`,
         color: '#1890ff',
         img: './4.png',
-        amount: formatUnits(falseTotalAmount),
-        supported: formatEther(falseAmountMap),
+        amount: formatUnits(falseTotalAmount || 0),
+        supported: formatEther(falseAmountMap || 0),
         userCount: falseTotalCount.toString(),
         direction: false
       }
@@ -82,9 +82,9 @@ function GameInfo() {
         c.shareHolderProfit(),
         c.winPrincipalProfit(),
         c.gameResult(),
-        c.isExistIncomeNeedReceive(account),
-        c.getIncomeAmount(account),
-        c.isReceivedMap(account)  // 是否已经领取 false表示未领取，true表示已经领取
+        account && c.isExistIncomeNeedReceive(account),
+        account && c.getIncomeAmount(account),
+        account && c.isReceivedMap(account)  // 是否已经领取 false表示未领取，true表示已经领取
       ])
       console.log('isExistIncomeNeedReceive', isExistIncomeNeedReceive, isReceivedMap);
       gameInfo.interestIncome = formatUnits(interestIncome)
@@ -100,15 +100,15 @@ function GameInfo() {
   React.useEffect(() => {
     // 初始化 team 数据
     (async () => {
-      const c = contracts['Game'];
-      const d = contracts.DAI
-
-      if (!library || !c) return
-      getGameInfo(c, d)
+      if (!contracts) return 
+      let c = contracts.Game;
+      let d = contracts.DAI
+      if (!d || !c) return
+      getGameInfo(c, d, contracts.getLibrary)
       if (timeref)  {
         clearInterval(timeref)
       }
-     // timeref = setInterval(() => getGameInfo(c,d), 60*1000)
+    // timeref = setInterval(() => getGameInfo(c,d), 60*1000)
       
     })();
   }, [pendings, account, library, chainId, contracts]);

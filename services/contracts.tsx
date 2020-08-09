@@ -9,6 +9,7 @@ const DAI = require('./abi/MockErc20.json');
 const GLXFactory = require('./abi/GLXFactory.json');
 const GLXRouter = require('./abi/GLXRouter.json');
 const GLXGame = require('./abi/GLXGame.json');
+const infura = 'https://ropsten.infura.io/v3/404b78d3e9364b79921c39a8ea909b1c'
 
 const CONTRACTS = {
   "HOPE": {
@@ -36,23 +37,29 @@ const CONTRACTS = {
 function getContract(name, web3): ethers.Contract {
   return new ethers.Contract(CONTRACTS[name]['address'], CONTRACTS[name]['abi'], web3);
 }
+
+
 const Contracts = function () {
   const { library, account, chainId } = useWeb3React<Web3Provider>();
   const { contracts, setContracts } = React.useContext(MyContext)
-
+  function getLibrary() {
+    return library || new ethers.providers.JsonRpcProvider(infura)
+  }
   React.useEffect(() => {
+    let signer = null
     if (!!library) {
-      let signer = null
+      signer = library
       if (typeof account !== 'undefined') signer = library.getSigner(account)
-
-      const Game = getContract('GLXGame', signer || library);
-      const Factory = getContract('GLXFactory', signer || library);
-      const Router = getContract('GLXRouter', signer || library);
-      const CDAI = getContract('CDAI', signer || library);
-      const DAI = getContract('DAI', signer || library);
-      const HOPE = getContract('HOPE', signer || library);
-      setContracts({ DAI, Game, HOPE, Factory, Router, CDAI, CONTRACTS });
+    }else {
+      signer = new ethers.providers.JsonRpcProvider(infura)
     }
+    const Game = getContract('GLXGame', signer);
+    const Factory = getContract('GLXFactory', signer);
+    const Router = getContract('GLXRouter', signer);
+    const CDAI = getContract('CDAI', signer);
+    const DAI = getContract('DAI', signer);
+    const HOPE = getContract('HOPE', signer);
+    setContracts({ DAI, Game, HOPE, Factory, Router, CDAI, CONTRACTS, getLibrary})
   }, [account, library, chainId]);
   return (<></>)
 }
