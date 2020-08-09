@@ -91,23 +91,11 @@ const App: FC = () => {
   const [activatingConnector, setActivatingConnector] = React.useState<any>()
   const [loginModalVisible, setLoginModalVisible] = React.useState<any>(false)
   const [pendings, setPendings] = React.useState<string[]>([])
-  const [contracts, setContracts] = React.useState<string[]>([]) // 所有合约数据
+  const [contracts, setContracts] = React.useState<string[]>([])
+  const [tokenDetails, setTokenDetails] = React.useState<Object>({
+    HopeBalanceOf:0, totalSupply:0
+  });
   const [winnerModalVisible, setWinnerModalVisible] = React.useState<boolean>(true)
-  const [teams, setTeams] = React.useState<{ name: string, img: string, amount: number, color: string, supported: number }[]>(
-    [{
-      name: '川普',
-      color: '#ff6666',
-      img: './2.svg',
-      amount: 1,
-      supported: 0,
-    }, {
-      name: '拜登',
-      color: '#1890ff',
-      img: './1.svg',
-      amount: 1,
-      supported: 0,
-    }]
-  );
   const [game, setGame] = React.useState<Object>({
     isGameResultOpen: false,
     isOnChainGame: true,
@@ -132,7 +120,8 @@ const App: FC = () => {
   // handle logic to connect in reaction to certain events on the injected ethereum provider, if it exists
   useInactiveListener(!triedEager || !!activatingConnector)
   
-  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, teams, setTeams, winnerModalVisible, setWinnerModalVisible, contracts, setContracts, game, setGame}
+  const APPContext = { setLoginModalVisible, loginModalVisible, pendings, setPendings, winnerModalVisible, setWinnerModalVisible, 
+    contracts, setContracts, game, setGame, tokenDetails, setTokenDetails}
   const redWidth = 700 * game.teamRed.amount / (+game.teamRed.amount + +game.teamBlue.amount) || 700/2;
   const blueWidth = 700 * game.teamBlue.amount / (+game.teamRed.amount + +game.teamBlue.amount) || 700 / 2;
 
@@ -232,17 +221,13 @@ const App: FC = () => {
               }}>{(game.teamBlue.amount / (game.teamRed.amount + game.teamBlue.amount) * 100).toFixed(2) + '%'}</span>
             </div>
           </div>
-          <Row style={{ width: 600, margin: '0 auto' }}>
-            <Col span={24 / teams.length}>
 
-            </Col>
-          </Row>
           <Row style={{ width: 600, margin: '0 auto' }}>
             {game.gameObjectToken && [game.teamRed,game.teamBlue].map((item, index) => {
               const other = index == 1 ? 0 : 1
               const sum = [game.teamRed, game.teamBlue][other].amount
               const earnings = item.amount && sum && (sum / item.amount * 100).toFixed(2) || 0
-              return <Col key={index} span={24 / teams.length}>
+              return <Col key={index} span={12}>
                 <Card bordered={false} style={{ width: 300, textAlign: !index ? 'left' : 'right' }}>
                   <span>已下注</span>
                   <Title level={2} style={{ color: item.color, marginTop: 0 }}>${item.amount}</Title>
@@ -293,7 +278,15 @@ const App: FC = () => {
         </Content>
         <Content className="site-layout-backgroud-intro">
           <div style={{ paddingTop: 30,textAlign:'center' }}><Title>HOPE TOKEN</Title></div>
-          <div style={{ textAlign: 'center', paddingBottom: 30 }}><Text type="secondary" style={{ fontSize: 20}}>小赌一把，即做平台股东</Text></div>
+          <div style={{ textAlign: 'center', paddingBottom: 30 }}><Text type="secondary" style={{ fontSize: 20}}>持有 HOPE 即可分红</Text></div>
+          <Row gutter={24} style={{ marginBottom: 40 }} >
+            <Col span={6} offset={8}>
+              <Statistic title="Hope 发行量" value={tokenDetails.totalSupply || 0} precision={2} />
+            </Col>
+            <Col span={6}>
+              <Statistic title="我的 HOPE" value={tokenDetails.HopeBalanceOf || 0} />
+            </Col>
+          </Row>
           {
             [{
                 title: '平台币简介',
@@ -321,9 +314,9 @@ const App: FC = () => {
                   3. 在 Pool2 ，买入或者卖出 HOPE，获得 DAI<br />
                   4. 继续拿 DAI 去下注，获得 HOPE，获得
                 </Paragraph>
-              }].map((item) => {
+              }].map((item,index) => {
                 return (
-                  <Row style={{ marginTop: 10 }}>
+                  <Row key={index} style={{ marginTop: 10 }}>
                     <Col span={4} offset={2}>
                       <item.icon style={{fontSize: 70}} />
                     </Col>

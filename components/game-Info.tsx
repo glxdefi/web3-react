@@ -37,7 +37,6 @@ function GameInfo() {
       c.trueAmountMap(account),
       c.falseAmountMap(account),
     ]);
-
     let _endBlockNumber = Number(endBlockNumber.toString())
     const gameInfo = {
       isGameResultOpen,
@@ -109,7 +108,7 @@ function GameInfo() {
       if (timeref)  {
         clearInterval(timeref)
       }
-     timeref = setInterval(() => getGameInfo(c,d), 60*1000)
+     // timeref = setInterval(() => getGameInfo(c,d), 60*1000)
       
     })();
   }, [pendings, account, library, chainId, contracts]);

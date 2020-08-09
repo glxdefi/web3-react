@@ -15,5 +15,7 @@ export const MyContext = React.createContext({
   setContracts: undefined,
   game: [Object],
   setGame: undefined,
+  tokenDetails:Object,
+  setTokenDetails: undefined
 });
 export const Provider = MyContext.Provider

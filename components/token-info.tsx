@@ -2,35 +2,29 @@
 import React from 'react'
 import { Web3Provider } from '@ethersproject/providers';
 import {useWeb3React } from '@web3-react/core'
-import { formatEther } from '@ethersproject/units'
 import ethers, { BigNumber} from 'ethers'
 import { MyContext } from '../context'
-
-
+import { formatUnits, formatEther } from '../utils'
 
 function TokenInfo({ address }: { address?: string }) {
   const { library, account, chainId} = useWeb3React<Web3Provider>();
-  const { contracts } = React.useContext(MyContext)
-
-  const [tokenDetails, setTokenDetails] = React.useState<Object>({
-    DAIBalanceOf: 0, HopeBalanceOf: 0
-  });
-
+  const { contracts, pendings, tokenDetails, setTokenDetails } = React.useContext(MyContext)
   React.useEffect(() => {
-    if (!!library && typeof address !== 'undefined') {
+    if (!!library && account) {
 
       (async () => {
-        const HOPE = new ethers.Contract(address, contracts.HOPE.address, library);
-        const DAI = new ethers.Contract(address, contracts.DAI.address, library);
-        const [DAIBalanceOf, HopeBalanceOf] = await Promise.all([
-          DAI.balanceOf(account),
-          HOPE.balanceOf(account),
+        const HOPE = contracts.HOPE;
+        if(!HOPE) return
+        const [ HopeBalanceOf, totalSupply] = await Promise.all([
+          HOPE?.balanceOf(account),
+          HOPE?.totalSupply()
         ]);
-        console.log({ DAIBalanceOf, HopeBalanceOf });
-        setTokenDetails({ DAIBalanceOf, HopeBalanceOf });
+        const _totalSupply = formatEther(totalSupply)
+        const _HopeBalanceOf =  formatEther(HopeBalanceOf)
+        setTokenDetails({ HopeBalanceOf: _HopeBalanceOf, totalSupply: _totalSupply});
       })();
     }
-  }, [account, address, library, chainId]);
+  }, [account, address, library, chainId, pendings, contracts.HOPE]);
 
   return (
     <div>
